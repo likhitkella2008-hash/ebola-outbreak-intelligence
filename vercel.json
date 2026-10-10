@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/simulate",
+      "destination": "/api/simulate.py"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
