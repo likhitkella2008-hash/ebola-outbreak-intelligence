@@ -1,80 +1,1540 @@
 import React, { useEffect, useMemo, useState } from 'react';
+
 import {
-  Area, AreaChart, Bar, BarChart, CartesianGrid, Legend, Line, LineChart,
-  ResponsiveContainer, Tooltip, XAxis, YAxis
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Legend,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
 } from 'recharts';
+
 import {
-  Activity, ArrowDownRight, ArrowUpRight, BarChart3, BookOpen, CalendarDays,
-  ChartNoAxesCombined, CircleAlert, Database, FlaskConical, GitBranch,
-  LayoutDashboard, Microscope, ShieldCheck
+  Activity,
+  ArrowUpRight,
+  BarChart3,
+  CalendarDays,
+  ChartNoAxesCombined,
+  CircleAlert,
+  Database,
+  FlaskConical,
+  GitBranch,
+  LayoutDashboard,
+  Microscope,
+  ShieldCheck,
 } from 'lucide-react';
+import OutbreakMap from './OutbreakMap';
 
 const NAV = [
-  { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-  { id: 'data', label: 'Historical data', icon: Database },
-  { id: 'model', label: 'Mathematical model', icon: FlaskConical },
-  { id: 'pinn', label: 'PINN workspace', icon: GitBranch },
+  {
+    id: 'overview',
+    label: 'Overview',
+    icon: LayoutDashboard,
+  },
+  {
+    id: 'data',
+    label: 'Historical data',
+    icon: Database,
+  },
+  {
+    id: 'model',
+    label: 'Mathematical model',
+    icon: FlaskConical,
+  },
+  {
+  id: 'pinn',
+  label: 'PINN workspace',
+  icon: GitBranch,
+},
+{
+  id: 'map',
+  label: 'Outbreak Map',
+  icon: Database,
+},
 ];
-const fmt = (n) => n == null || Number.isNaN(Number(n)) ? '—' : Number(n).toLocaleString('en-US', { maximumFractionDigits: 1 });
-const dateLabel = (s) => new Date(`${s}T00:00:00`).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
 
-function StatCard({ label, value, note, icon: Icon, accent = 'blue' }) {
-  return <article className={`stat-card ${accent}`}><div className="stat-top"><span>{label}</span><span className="stat-icon"><Icon size={18}/></span></div><div className="stat-value">{value}</div><div className="stat-note">{note}</div></article>;
+const fmt = (n) =>
+  n == null || Number.isNaN(Number(n))
+    ? '—'
+    : Number(n).toLocaleString('en-US', {
+        maximumFractionDigits: 1,
+      });
+
+const dateLabel = (s) =>
+  new Date(`${s}T00:00:00`).toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+  });
+
+function StatCard({
+  label,
+  value,
+  note,
+  icon: Icon,
+  accent = 'blue',
+}) {
+  return (
+    <article className={`stat-card ${accent}`}>
+      <div className="stat-top">
+        <span>{label}</span>
+
+        <span className="stat-icon">
+          <Icon size={18} />
+        </span>
+      </div>
+
+      <div className="stat-value">{value}</div>
+
+      <div className="stat-note">{note}</div>
+    </article>
+  );
 }
+
 function SectionTitle({ eyebrow, title, text }) {
-  return <div className="section-title"><div className="eyebrow">{eyebrow}</div><h1>{title}</h1>{text && <p>{text}</p>}</div>;
+  return (
+    <div className="section-title">
+      <div className="eyebrow">{eyebrow}</div>
+
+      <h1>{title}</h1>
+
+      {text && <p>{text}</p>}
+    </div>
+  );
 }
+
 function EmptyState({ icon: Icon, title, text }) {
-  return <div className="empty-state"><div className="empty-icon"><Icon size={25}/></div><h3>{title}</h3><p>{text}</p><span className="status-pill"><span className="status-dot"/> Planned implementation</span></div>;
+  return (
+    <div className="empty-state">
+      <div className="empty-icon">
+        <Icon size={25} />
+      </div>
+
+      <h3>{title}</h3>
+
+      <p>{text}</p>
+
+      <span className="status-pill">
+        <span className="status-dot" />
+        Planned implementation
+      </span>
+    </div>
+  );
 }
 
 export default function App() {
   const [page, setPage] = useState('overview');
+
   const [rows, setRows] = useState([]);
+
   const [loadError, setLoadError] = useState('');
+
+  // NEW: State for the mathematical simulation API.
+  const [simulation, setSimulation] = useState(null);
+
+  const [simulationError, setSimulationError] = useState('');
+
+  const [simulationLoading, setSimulationLoading] = useState(false);
+
+  // Load the historical dataset.
   useEffect(() => {
-    fetch('/ebola_dataset.json').then(r => { if (!r.ok) throw new Error('Dataset could not be loaded'); return r.json(); })
-      .then(data => setRows(data)).catch(() => setLoadError('The dataset file could not be loaded. Check that public/ebola_dataset.json exists.'));
+    fetch('/ebola_dataset.json')
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error('Dataset could not be loaded.');
+        }
+
+        return response.json();
+      })
+      .then((data) => {
+        if (!Array.isArray(data)) {
+          throw new Error('Unexpected dataset format.');
+        }
+
+        setRows(data);
+      })
+      .catch(() => {
+        setLoadError(
+          'The dataset could not be loaded. Check public/ebola_dataset.json.'
+        );
+      });
   }, []);
 
-  const chartRows = useMemo(() => rows.map(r => ({
-    ...r, shortDate: dateLabel(r.date),
-    cumulative_confirmed_cases: Number(r.cumulative_confirmed_cases),
-    cumulative_confirmed_deaths: Number(r.cumulative_confirmed_deaths),
-    weekly_new_confirmed_cases: r.weekly_new_confirmed_cases == null ? null : Number(r.weekly_new_confirmed_cases),
-    weekly_new_confirmed_deaths: r.weekly_new_confirmed_deaths == null ? null : Number(r.weekly_new_confirmed_deaths),
-    calculated_cfr_percent: Number(r.calculated_cfr_percent),
-  })), [rows]);
+  // Convert historical values into numbers for charts.
+  const chartRows = useMemo(
+    () =>
+      rows.map((row) => ({
+        ...row,
+
+        shortDate: dateLabel(row.date),
+
+        cumulative_confirmed_cases: Number(
+          row.cumulative_confirmed_cases
+        ),
+
+        cumulative_confirmed_deaths: Number(
+          row.cumulative_confirmed_deaths
+        ),
+
+        weekly_new_confirmed_cases:
+          row.weekly_new_confirmed_cases == null
+            ? null
+            : Number(row.weekly_new_confirmed_cases),
+
+        weekly_new_confirmed_deaths:
+          row.weekly_new_confirmed_deaths == null
+            ? null
+            : Number(row.weekly_new_confirmed_deaths),
+
+        calculated_cfr_percent: Number(
+          row.calculated_cfr_percent
+        ),
+      })),
+    [rows]
+  );
+
   const latest = chartRows.at(-1);
+
   const previous = chartRows.at(-2);
-  const caseDelta = latest && previous ? latest.cumulative_confirmed_cases - previous.cumulative_confirmed_cases : null;
-  const deathDelta = latest && previous ? latest.cumulative_confirmed_deaths - previous.cumulative_confirmed_deaths : null;
 
-  return <div className="app-shell">
-    <aside className="sidebar">
-      <div className="brand"><div className="brand-mark"><Activity size={22}/></div><div><strong>OUTBREAK<span> INTELLIGENCE</span></strong><small>MATHEMATICAL MODELLING LAB</small></div></div>
-      <div className="workspace-label">WORKSPACE</div>
-      <nav>{NAV.map(({id,label,icon:Icon}) => <button key={id} className={`nav-item ${page===id?'active':''}`} onClick={()=>setPage(id)}><Icon size={18}/><span>{label}</span>{id==='pinn'&&<span className="nav-tag">WIP</span>}</button>)}</nav>
-      <div className="sidebar-bottom"><div className="sidebar-status"><span className="live-dot"/><div><b>Dataset loaded</b><small>{rows.length ? `${rows.length} weekly records` : 'Loading records…'}</small></div></div><div className="sidebar-foot">PROJECT WORKSPACE <span>v0.1 · Research prototype</span></div></div>
-    </aside>
+  const caseDelta =
+    latest && previous
+      ? latest.cumulative_confirmed_cases -
+        previous.cumulative_confirmed_cases
+      : null;
 
-    <main className="main-area">
-      <header className="topbar"><div className="breadcrumb">Research workspace <span>/</span> <b>{NAV.find(n=>n.id===page)?.label}</b></div><div className="top-right"><span className="dataset-chip"><span/> Bundibugyo dataset</span><div className="avatar">MM</div></div></header>
-      {loadError && <div className="error-banner"><CircleAlert size={17}/>{loadError}</div>}
-      {page === 'overview' && <>
-        <section className="hero"><div className="hero-copy"><div className="hero-kicker"><span className="pulse"/> OUTBREAK ANALYTICS · RESEARCH PROTOTYPE</div><h1>Ebola Outbreak<br/><em>Intelligence</em></h1><p>Explore reported case trends and build a transparent mathematical modelling workflow—from historical observations to differential-equation simulations.</p><div className="hero-actions"><button onClick={()=>setPage('data')} className="primary-button"><ChartNoAxesCombined size={17}/> Explore dataset</button><button onClick={()=>setPage('model')} className="secondary-button">Open mathematical model <ArrowUpRight size={16}/></button></div></div><div className="hero-visual"><div className="visual-grid"/><div className="orb orb-one"/><div className="orb orb-two"/><div className="orb-core"><Activity size={35}/></div><div className="visual-label label-top"><span>OBSERVATION SERIES</span><b>{rows.length || '—'} <small>weekly records</small></b></div><div className="visual-label label-bottom"><span>MODELLING STATUS</span><b><i/> ODE integration next</b></div><svg className="orbit-lines" viewBox="0 0 400 320" aria-hidden="true"><ellipse cx="200" cy="160" rx="155" ry="85"/><ellipse cx="200" cy="160" rx="110" ry="145" transform="rotate(38 200 160)"/><ellipse cx="200" cy="160" rx="110" ry="145" transform="rotate(-38 200 160)"/></svg></div></section>
-        <div className="section-heading-row"><div><div className="eyebrow">LATEST OBSERVATION</div><h2>Outbreak snapshot</h2></div><span className="as-of">{latest ? `Dataset ends ${new Date(latest.date+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})}` : 'Loading dataset'}</span></div>
-        <section className="stats-grid"><StatCard label="Cumulative confirmed cases" value={fmt(latest?.cumulative_confirmed_cases)} note={caseDelta==null?'Latest available record':`+${fmt(caseDelta)} from previous record`} icon={Activity} accent="blue"/><StatCard label="Cumulative confirmed deaths" value={fmt(latest?.cumulative_confirmed_deaths)} note={deathDelta==null?'Latest available record':`+${fmt(deathDelta)} from previous record`} icon={CircleAlert} accent="red"/><StatCard label="Calculated case-fatality ratio" value={latest?`${fmt(latest.calculated_cfr_percent)}%`:'—'} note="Deaths ÷ confirmed cases in this dataset" icon={ShieldCheck} accent="violet"/><StatCard label="Weekly observations" value={fmt(rows.length)} note="Records available in the uploaded CSV" icon={CalendarDays} accent="green"/></section>
-        <section className="charts-grid"><article className="panel chart-panel wide"><div className="panel-heading"><div><h3>Reported outbreak trajectory</h3><p>Cumulative confirmed cases and deaths</p></div><span className="chart-badge">HISTORICAL DATA</span></div><div className="chart-wrap"><ResponsiveContainer width="100%" height="100%"><AreaChart data={chartRows} margin={{top:8,right:8,left:0,bottom:0}}><defs><linearGradient id="casesFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#48c6cf" stopOpacity={0.26}/><stop offset="100%" stopColor="#48c6cf" stopOpacity={0.01}/></linearGradient><linearGradient id="deathsFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#ff7187" stopOpacity={0.2}/><stop offset="100%" stopColor="#ff7187" stopOpacity={0.01}/></linearGradient></defs><CartesianGrid stroke="#29313b" strokeDasharray="3 5" vertical={false}/><XAxis dataKey="shortDate" tick={{fill:'#8d9aaa',fontSize:11}} axisLine={false} tickLine={false}/><YAxis tick={{fill:'#8d9aaa',fontSize:11}} axisLine={false} tickLine={false} tickFormatter={v=>v>=1000?`${(v/1000).toFixed(1)}k`:v}/><Tooltip contentStyle={{background:'#171d25',border:'1px solid #303b47',borderRadius:10,color:'#edf3f7'}}/><Legend/><Area type="monotone" dataKey="cumulative_confirmed_cases" name="Confirmed cases" stroke="#48c6cf" strokeWidth={2.5} fill="url(#casesFill)" activeDot={{r:5}}/><Area type="monotone" dataKey="cumulative_confirmed_deaths" name="Confirmed deaths" stroke="#ff7187" strokeWidth={2.5} fill="url(#deathsFill)" activeDot={{r:5}}/></AreaChart></ResponsiveContainer></div></article><article className="panel chart-panel"><div className="panel-heading"><div><h3>Weekly new cases</h3><p>Reported increments per record</p></div><span className="mini-icon"><BarChart3 size={17}/></span></div><div className="chart-wrap small"><ResponsiveContainer width="100%" height="100%"><BarChart data={chartRows.slice(1)} margin={{top:8,right:0,left:-14,bottom:0}}><CartesianGrid stroke="#29313b" strokeDasharray="3 5" vertical={false}/><XAxis dataKey="shortDate" tick={{fill:'#8d9aaa',fontSize:10}} axisLine={false} tickLine={false}/><YAxis tick={{fill:'#8d9aaa',fontSize:10}} axisLine={false} tickLine={false}/><Tooltip contentStyle={{background:'#171d25',border:'1px solid #303b47',borderRadius:10,color:'#edf3f7'}}/><Bar dataKey="weekly_new_confirmed_cases" name="New cases" fill="#9d8cff" radius={[4,4,0,0]}/></BarChart></ResponsiveContainer></div></article></section>
-        <section className="bottom-grid"><article className="panel method-panel"><div className="method-icon"><FlaskConical size={20}/></div><div><div className="eyebrow">MATHEMATICAL WORKFLOW</div><h3>From observations to model behaviour</h3><p>The next implementation phase will add an Ebola-appropriate compartmental ODE model, parameter fitting, and a tested comparison between numerical solutions and observations.</p><button className="text-button" onClick={()=>setPage('model')}>View model plan <ArrowUpRight size={15}/></button></div></article><article className="panel progress-panel"><div className="panel-heading"><div><h3>Build progress</h3><p>Implementation milestones</p></div></div>{[['Historical data view',true],['Interactive charts',true],['Ebola ODE model',false],['PINN training & evaluation',false],['Vercel deployment',false]].map(([t,done])=><div className="progress-row" key={t}><span className={`check ${done?'done':''}`}>{done?'✓':''}</span><span>{t}</span><small>{done?'Ready':'Planned'}</small></div>)}</article></section>
-      </>}
+  const deathDelta =
+    latest && previous
+      ? latest.cumulative_confirmed_deaths -
+        previous.cumulative_confirmed_deaths
+      : null;
 
-      {page === 'data' && <div className="content-page"><SectionTitle eyebrow="DATA EXPLORER" title="Historical outbreak data" text="Review the uploaded weekly dataset. Values shown here are transcribed from the supplied CSV and have not been independently verified against the cited source."/><div className="notice"><CircleAlert size={18}/><div><b>Source and interpretation note</b><p>This dataset lists Bundibugyo virus disease records for May–August 2026 and includes a source field naming WHO Africa weekly reports. Verify the source reports before treating these values as authoritative public-health statistics.</p></div></div><section className="charts-grid data-charts"><article className="panel chart-panel wide"><div className="panel-heading"><div><h3>Cumulative cases and deaths</h3><p>Reported totals by date</p></div></div><div className="chart-wrap"><ResponsiveContainer width="100%" height="100%"><LineChart data={chartRows}><CartesianGrid stroke="#e5eaf0" strokeDasharray="3 5" vertical={false}/><XAxis dataKey="shortDate" tick={{fill:'#718096',fontSize:11}} axisLine={false} tickLine={false}/><YAxis tick={{fill:'#718096',fontSize:11}} axisLine={false} tickLine={false}/><Tooltip/><Legend/><Line type="monotone" dataKey="cumulative_confirmed_cases" name="Confirmed cases" stroke="#087e8b" strokeWidth={2.5} dot={{r:3}}/><Line type="monotone" dataKey="cumulative_confirmed_deaths" name="Confirmed deaths" stroke="#dc5268" strokeWidth={2.5} dot={{r:3}}/></LineChart></ResponsiveContainer></div></article><article className="panel chart-panel"><div className="panel-heading"><div><h3>Calculated CFR</h3><p>Deaths divided by confirmed cases</p></div></div><div className="chart-wrap small"><ResponsiveContainer width="100%" height="100%"><LineChart data={chartRows}><CartesianGrid stroke="#e5eaf0" strokeDasharray="3 5" vertical={false}/><XAxis dataKey="shortDate" tick={{fill:'#718096',fontSize:10}} axisLine={false} tickLine={false}/><YAxis tick={{fill:'#718096',fontSize:10}} unit="%" axisLine={false} tickLine={false}/><Tooltip formatter={v=>`${fmt(v)}%`}/><Line type="monotone" dataKey="calculated_cfr_percent" name="Calculated CFR" stroke="#7865d9" strokeWidth={2.5} dot={{r:3}}/></LineChart></ResponsiveContainer></div></article></section><article className="panel table-panel"><div className="panel-heading"><div><h3>Dataset records</h3><p>{rows.length} records · newest record first</p></div><button className="download-button" onClick={()=>window.open('/ebola_dataset.json','_blank')}>View JSON data</button></div><div className="table-scroll"><table><thead><tr><th>Date</th><th>Report #</th><th>Confirmed cases</th><th>Confirmed deaths</th><th>Weekly new cases</th><th>Weekly new deaths</th><th>Calculated CFR</th></tr></thead><tbody>{[...chartRows].reverse().map(r=><tr key={r.date}><td>{new Date(r.date+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}</td><td>{r.report_number}</td><td>{fmt(r.cumulative_confirmed_cases)}</td><td>{fmt(r.cumulative_confirmed_deaths)}</td><td>{fmt(r.weekly_new_confirmed_cases)}</td><td>{fmt(r.weekly_new_confirmed_deaths)}</td><td>{fmt(r.calculated_cfr_percent)}%</td></tr>)}</tbody></table></div></article></div>}
+  // NEW: Call the Python SEIRD simulation API.
+  async function runSimulation() {
+    setSimulationLoading(true);
 
-      {page === 'model' && <div className="content-page"><SectionTitle eyebrow="SCIENTIFIC WORKSPACE" title="Ebola mathematical model" text="A planned SEIRD-style compartmental model for Ebola transmission. The equations and parameters must be specified and tested before this section can generate simulations."/><div className="notice"><CircleAlert size={18}/><div><b>Why this is a separate model</b><p>The existing project models human–vector transmission. Ebola is not a mosquito-borne disease, so we must not reuse those transmission equations unchanged. This page is a design specification, not a claim that the Ebola ODE solver is already implemented.</p></div></div><div className="equation-grid"><article className="equation-card"><span className="equation-label">STATE VARIABLES</span><h3>Compartment definitions</h3><div className="state-row"><b>S(t)</b><span>Susceptible population</span></div><div className="state-row"><b>E(t)</b><span>Exposed population</span></div><div className="state-row"><b>I(t)</b><span>Infectious population</span></div><div className="state-row"><b>R(t)</b><span>Recovered population</span></div><div className="state-row"><b>D(t)</b><span>Deaths attributed to disease</span></div><p className="equation-foot">Definitions and transition assumptions must be stated clearly in the final model.</p></article><article className="equation-card"><span className="equation-label">MODEL PLAN</span><h3>Coupled ODE structure</h3><div className="math-line">dS/dt = −λ(t)S</div><div className="math-line">dE/dt = λ(t)S − σE</div><div className="math-line">dI/dt = σE − (γ + μ)I</div><div className="math-line">dR/dt = γI</div><div className="math-line">dD/dt = μI</div><p className="equation-foot">Illustrative skeleton only. Here λ(t) is the force of infection; σ, γ, and μ represent transition rates. The final formulation must handle disease-specific assumptions and population accounting consistently.</p></article></div><EmptyState icon={FlaskConical} title="ODE simulation not connected yet" text="Next: implement the Ebola model in Python, define parameter sources or calibration rules, solve it numerically, and compare its outputs with observed case data."/></div>}
+    setSimulationError('');
 
-      {page === 'pinn' && <div className="content-page"><SectionTitle eyebrow="PHYSICS-INFORMED LEARNING" title="PINN workspace" text="The PINN will be added only after the Ebola ODE model and observation mapping are defined."/><div className="pinn-banner"><div className="pinn-symbol"><GitBranch size={30}/></div><div><span className="eyebrow">NEXT RESEARCH MILESTONE</span><h2>Combine data fit with equation consistency</h2><p>A Physics-Informed Neural Network can be trained to reduce both mismatch with observations and residuals of the governing differential equations. It does not automatically guarantee accurate forecasts.</p></div></div><div className="loss-grid"><article className="loss-card"><span>01 · DATA LOSS</span><h3>Match observations</h3><p>Quantifies disagreement between the network's outputs and selected observed data, using a clearly defined mapping between reported cases and model compartments.</p></article><article className="loss-card"><span>02 · PHYSICS LOSS</span><h3>Respect the ODEs</h3><p>Penalizes residuals when the network's predicted states and time derivatives fail to satisfy the chosen Ebola model equations.</p></article><article className="loss-card loss-total"><span>COMBINED OBJECTIVE</span><div className="math-line">L = L<sub>data</sub> + λL<sub>physics</sub></div><p>λ balances the relative contribution of the two losses and must be selected and evaluated carefully.</p></article></div><EmptyState icon={Microscope} title="PINN not trained for Ebola yet" text="The existing PINN implementation is not yet evidence of a trained Ebola forecasting model. We will adapt, train, and validate it after the ODE model is implemented."/></div>}
-      <footer className="footer"><span>OUTBREAK INTELLIGENCE · MATHEMATICAL MODELLING PROJECT</span><span>Research prototype · Not for clinical or public-health decision-making</span></footer>
-    </main>
-  </div>;
+    try {
+      const response = await fetch('/api/simulate', {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json',
+        },
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          result.error || 'The simulation API returned an error.'
+        );
+      }
+
+      const requiredKeys = [
+        'time',
+        'susceptible',
+        'exposed',
+        'infectious',
+        'recovered',
+        'deaths',
+      ];
+
+      for (const key of requiredKeys) {
+        if (!Array.isArray(result[key])) {
+          throw new Error(
+            `The simulation response is missing valid "${key}" data.`
+          );
+        }
+      }
+
+      if (
+        result.time.length === 0 ||
+        !requiredKeys
+          .slice(1)
+          .every((key) => result[key].length === result.time.length)
+      ) {
+        throw new Error(
+          'The simulation returned inconsistent data arrays.'
+        );
+      }
+
+      const simulationRows = result.time.map((time, index) => {
+        const point = {
+          day: Number(time),
+        };
+
+        for (const key of requiredKeys.slice(1)) {
+          point[key] = Number(result[key][index]);
+
+          if (!Number.isFinite(point[key])) {
+            throw new Error(
+              `The simulation returned invalid values for ${key}.`
+            );
+          }
+        }
+
+        return point;
+      });
+
+      setSimulation({
+        ...result,
+        chartRows: simulationRows,
+      });
+    } catch (error) {
+      setSimulation(null);
+
+      setSimulationError(
+        error.message ||
+          'Unable to run the mathematical simulation.'
+      );
+    } finally {
+      setSimulationLoading(false);
+    }
+  }
+
+  return (
+    <div className="app-shell">
+      <aside className="sidebar">
+        <div className="brand">
+          <div className="brand-mark">
+            <Activity size={22} />
+          </div>
+
+          <div>
+            <strong>
+              OUTBREAK<span> INTELLIGENCE</span>
+            </strong>
+
+            <small>MATHEMATICAL MODELLING LAB</small>
+          </div>
+        </div>
+
+        <div className="workspace-label">WORKSPACE</div>
+
+        <nav>
+          {NAV.map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              className={`nav-item ${
+                page === id ? 'active' : ''
+              }`}
+              onClick={() => setPage(id)}
+            >
+              <Icon size={18} />
+
+              <span>{label}</span>
+
+              {id === 'pinn' && (
+                <span className="nav-tag">WIP</span>
+              )}
+            </button>
+          ))}
+        </nav>
+
+        <div className="sidebar-bottom">
+          <div className="sidebar-status">
+            <span className="live-dot" />
+
+            <div>
+              <b>Dataset loaded</b>
+
+              <small>
+                {rows.length
+                  ? `${rows.length} weekly records`
+                  : 'Loading records…'}
+              </small>
+            </div>
+          </div>
+
+          <div className="sidebar-foot">
+            PROJECT WORKSPACE
+
+            <span>v0.2 · Research prototype</span>
+          </div>
+        </div>
+      </aside>
+
+      <main className="main-area">
+        <header className="topbar">
+          <div className="breadcrumb">
+            Research workspace <span>/</span>{' '}
+            <b>{NAV.find((item) => item.id === page)?.label}</b>
+          </div>
+
+          <div className="top-right">
+            <span className="dataset-chip">
+              <span />
+              Bundibugyo dataset
+            </span>
+
+            <div className="avatar">MM</div>
+          </div>
+        </header>
+
+        {loadError && (
+          <div className="error-banner">
+            <CircleAlert size={17} />
+
+            {loadError}
+          </div>
+        )}
+
+        {/* ================= OVERVIEW ================= */}
+
+        {page === 'overview' && (
+          <>
+            <section className="hero">
+              <div className="hero-copy">
+                <div className="hero-kicker">
+                  <span className="pulse" />
+                  OUTBREAK ANALYTICS · RESEARCH PROTOTYPE
+                </div>
+
+                <h1>
+                  Ebola Outbreak
+                  <br />
+                  <em>Intelligence</em>
+                </h1>
+
+                <p>
+                  Explore reported case trends and build a
+                  transparent mathematical modelling workflow—from
+                  historical observations to differential-equation
+                  simulations.
+                </p>
+
+                <div className="hero-actions">
+                  <button
+                    onClick={() => setPage('data')}
+                    className="primary-button"
+                  >
+                    <ChartNoAxesCombined size={17} />
+                    Explore dataset
+                  </button>
+
+                  <button
+                    onClick={() => setPage('model')}
+                    className="secondary-button"
+                  >
+                    Open mathematical model
+                    <ArrowUpRight size={16} />
+                  </button>
+                </div>
+              </div>
+
+              <div className="hero-visual">
+                <div className="visual-grid" />
+
+                <div className="orb orb-one" />
+
+                <div className="orb orb-two" />
+
+                <div className="orb-core">
+                  <Activity size={35} />
+                </div>
+
+                <div className="visual-label label-top">
+                  <span>OBSERVATION SERIES</span>
+
+                  <b>
+                    {rows.length || '—'}{' '}
+                    <small>weekly records</small>
+                  </b>
+                </div>
+
+                <div className="visual-label label-bottom">
+                  <span>MODELLING STATUS</span>
+
+                  <b>
+                    <i /> ODE simulation available
+                  </b>
+                </div>
+
+                <svg
+                  className="orbit-lines"
+                  viewBox="0 0 400 320"
+                  aria-hidden="true"
+                >
+                  <ellipse
+                    cx="200"
+                    cy="160"
+                    rx="155"
+                    ry="85"
+                  />
+
+                  <ellipse
+                    cx="200"
+                    cy="160"
+                    rx="110"
+                    ry="145"
+                    transform="rotate(38 200 160)"
+                  />
+
+                  <ellipse
+                    cx="200"
+                    cy="160"
+                    rx="110"
+                    ry="145"
+                    transform="rotate(-38 200 160)"
+                  />
+                </svg>
+              </div>
+            </section>
+
+            <div className="section-heading-row">
+              <div>
+                <div className="eyebrow">
+                  LATEST OBSERVATION
+                </div>
+
+                <h2>Outbreak snapshot</h2>
+              </div>
+
+              <span className="as-of">
+                {latest
+                  ? `Dataset ends ${new Date(
+                      `${latest.date}T00:00:00`
+                    ).toLocaleDateString('en-GB', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric',
+                    })}`
+                  : 'Loading dataset'}
+              </span>
+            </div>
+
+            <section className="stats-grid">
+              <StatCard
+                label="Cumulative confirmed cases"
+                value={fmt(latest?.cumulative_confirmed_cases)}
+                note={
+                  caseDelta == null
+                    ? 'Latest available record'
+                    : `+${fmt(caseDelta)} from previous record`
+                }
+                icon={Activity}
+                accent="blue"
+              />
+
+              <StatCard
+                label="Cumulative confirmed deaths"
+                value={fmt(latest?.cumulative_confirmed_deaths)}
+                note={
+                  deathDelta == null
+                    ? 'Latest available record'
+                    : `+${fmt(deathDelta)} from previous record`
+                }
+                icon={CircleAlert}
+                accent="red"
+              />
+
+              <StatCard
+                label="Calculated case-fatality ratio"
+                value={
+                  latest
+                    ? `${fmt(latest.calculated_cfr_percent)}%`
+                    : '—'
+                }
+                note="Deaths ÷ confirmed cases in this dataset"
+                icon={ShieldCheck}
+                accent="violet"
+              />
+
+              <StatCard
+                label="Weekly observations"
+                value={fmt(rows.length)}
+                note="Records available in the supplied dataset"
+                icon={CalendarDays}
+                accent="green"
+              />
+            </section>
+
+            <section className="charts-grid">
+              <article className="panel chart-panel wide">
+                <div className="panel-heading">
+                  <div>
+                    <h3>Reported outbreak trajectory</h3>
+
+                    <p>Cumulative confirmed cases and deaths</p>
+                  </div>
+
+                  <span className="chart-badge">
+                    HISTORICAL DATA
+                  </span>
+                </div>
+
+                <div className="chart-wrap">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={chartRows}>
+                      <defs>
+                        <linearGradient
+                          id="casesFill"
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="0%"
+                            stopColor="#48c6cf"
+                            stopOpacity={0.26}
+                          />
+
+                          <stop
+                            offset="100%"
+                            stopColor="#48c6cf"
+                            stopOpacity={0.01}
+                          />
+                        </linearGradient>
+
+                        <linearGradient
+                          id="deathsFill"
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="0%"
+                            stopColor="#ff7187"
+                            stopOpacity={0.2}
+                          />
+
+                          <stop
+                            offset="100%"
+                            stopColor="#ff7187"
+                            stopOpacity={0.01}
+                          />
+                        </linearGradient>
+                      </defs>
+
+                      <CartesianGrid
+                        stroke="#29313b"
+                        strokeDasharray="3 5"
+                        vertical={false}
+                      />
+
+                      <XAxis
+                        dataKey="shortDate"
+                        tick={{
+                          fill: '#8d9aaa',
+                          fontSize: 11,
+                        }}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+
+                      <YAxis
+                        tick={{
+                          fill: '#8d9aaa',
+                          fontSize: 11,
+                        }}
+                        axisLine={false}
+                        tickLine={false}
+                        tickFormatter={(value) =>
+                          value >= 1000
+                            ? `${(value / 1000).toFixed(1)}k`
+                            : value
+                        }
+                      />
+
+                      <Tooltip
+                        contentStyle={{
+                          background: '#171d25',
+                          border: '1px solid #303b47',
+                          borderRadius: 10,
+                          color: '#edf3f7',
+                        }}
+                      />
+
+                      <Legend />
+
+                      <Area
+                        type="monotone"
+                        dataKey="cumulative_confirmed_cases"
+                        name="Confirmed cases"
+                        stroke="#48c6cf"
+                        strokeWidth={2.5}
+                        fill="url(#casesFill)"
+                      />
+
+                      <Area
+                        type="monotone"
+                        dataKey="cumulative_confirmed_deaths"
+                        name="Confirmed deaths"
+                        stroke="#ff7187"
+                        strokeWidth={2.5}
+                        fill="url(#deathsFill)"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </article>
+
+              <article className="panel chart-panel">
+                <div className="panel-heading">
+                  <div>
+                    <h3>Weekly new cases</h3>
+
+                    <p>Reported increments per record</p>
+                  </div>
+
+                  <span className="mini-icon">
+                    <BarChart3 size={17} />
+                  </span>
+                </div>
+
+                <div className="chart-wrap small">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={chartRows.slice(1)}>
+                      <CartesianGrid
+                        stroke="#29313b"
+                        strokeDasharray="3 5"
+                        vertical={false}
+                      />
+
+                      <XAxis
+                        dataKey="shortDate"
+                        tick={{
+                          fill: '#8d9aaa',
+                          fontSize: 10,
+                        }}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+
+                      <YAxis
+                        tick={{
+                          fill: '#8d9aaa',
+                          fontSize: 10,
+                        }}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+
+                      <Tooltip />
+
+                      <Bar
+                        dataKey="weekly_new_confirmed_cases"
+                        name="New cases"
+                        fill="#9d8cff"
+                        radius={[4, 4, 0, 0]}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </article>
+            </section>
+
+            <section className="bottom-grid">
+              <article className="panel method-panel">
+                <div className="method-icon">
+                  <FlaskConical size={20} />
+                </div>
+
+                <div>
+                  <div className="eyebrow">
+                    MATHEMATICAL WORKFLOW
+                  </div>
+
+                  <h3>From observations to model behaviour</h3>
+
+                  <p>
+                    The SEIRD numerical simulation is available for
+                    exploration. Parameter calibration and
+                    comparison with the reported observations remain
+                    future research tasks.
+                  </p>
+
+                  <button
+                    className="text-button"
+                    onClick={() => setPage('model')}
+                  >
+                    View mathematical model
+                    <ArrowUpRight size={15} />
+                  </button>
+                </div>
+              </article>
+
+              <article className="panel progress-panel">
+                <div className="panel-heading">
+                  <div>
+                    <h3>Build progress</h3>
+
+                    <p>Implementation milestones</p>
+                  </div>
+                </div>
+
+                {[
+                  ['Historical data view', true],
+                  ['Interactive charts', true],
+                  ['SEIRD simulation API', true],
+                  ['Parameter calibration', false],
+                  ['PINN training and evaluation', false],
+                ].map(([title, done]) => (
+                  <div className="progress-row" key={title}>
+                    <span className={`check ${done ? 'done' : ''}`}>
+                      {done ? '✓' : ''}
+                    </span>
+
+                    <span>{title}</span>
+
+                    <small>{done ? 'Available' : 'Planned'}</small>
+                  </div>
+                ))}
+              </article>
+            </section>
+          </>
+        )}
+
+        {/* ================= HISTORICAL DATA ================= */}
+
+        {page === 'data' && (
+          <div className="content-page">
+            <SectionTitle
+              eyebrow="DATA EXPLORER"
+              title="Historical outbreak data"
+              text="Review the supplied weekly dataset. Values have not been independently verified against the cited source."
+            />
+
+            <div className="notice">
+              <CircleAlert size={18} />
+
+              <div>
+                <b>Source and interpretation note</b>
+
+                <p>
+                  This dataset lists Bundibugyo virus disease
+                  records for May–August 2026. Its source field names
+                  WHO Africa weekly reports. Verify the original
+                  reports before treating these values as
+                  authoritative public-health statistics.
+                </p>
+              </div>
+            </div>
+
+            <section className="charts-grid data-charts">
+              <article className="panel chart-panel wide">
+                <div className="panel-heading">
+                  <div>
+                    <h3>Cumulative cases and deaths</h3>
+
+                    <p>Reported totals by date</p>
+                  </div>
+                </div>
+
+                <div className="chart-wrap">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={chartRows}>
+                      <CartesianGrid
+                        stroke="#e5eaf0"
+                        strokeDasharray="3 5"
+                        vertical={false}
+                      />
+
+                      <XAxis
+                        dataKey="shortDate"
+                        tick={{
+                          fill: '#718096',
+                          fontSize: 11,
+                        }}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+
+                      <YAxis
+                        tick={{
+                          fill: '#718096',
+                          fontSize: 11,
+                        }}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+
+                      <Tooltip />
+
+                      <Legend />
+
+                      <Line
+                        type="monotone"
+                        dataKey="cumulative_confirmed_cases"
+                        name="Confirmed cases"
+                        stroke="#087e8b"
+                        strokeWidth={2.5}
+                        dot={{ r: 3 }}
+                      />
+
+                      <Line
+                        type="monotone"
+                        dataKey="cumulative_confirmed_deaths"
+                        name="Confirmed deaths"
+                        stroke="#dc5268"
+                        strokeWidth={2.5}
+                        dot={{ r: 3 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </article>
+
+              <article className="panel chart-panel">
+                <div className="panel-heading">
+                  <div>
+                    <h3>Calculated CFR</h3>
+
+                    <p>Deaths divided by confirmed cases</p>
+                  </div>
+                </div>
+
+                <div className="chart-wrap small">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={chartRows}>
+                      <CartesianGrid
+                        stroke="#e5eaf0"
+                        strokeDasharray="3 5"
+                        vertical={false}
+                      />
+
+                      <XAxis
+                        dataKey="shortDate"
+                        tick={{
+                          fill: '#718096',
+                          fontSize: 10,
+                        }}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+
+                      <YAxis
+                        tick={{
+                          fill: '#718096',
+                          fontSize: 10,
+                        }}
+                        unit="%"
+                        axisLine={false}
+                        tickLine={false}
+                      />
+
+                      <Tooltip
+                        formatter={(value) => `${fmt(value)}%`}
+                      />
+
+                      <Line
+                        type="monotone"
+                        dataKey="calculated_cfr_percent"
+                        name="Calculated CFR"
+                        stroke="#7865d9"
+                        strokeWidth={2.5}
+                        dot={{ r: 3 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </article>
+            </section>
+
+            <article className="panel table-panel">
+              <div className="panel-heading">
+                <div>
+                  <h3>Dataset records</h3>
+
+                  <p>
+                    {rows.length} records · newest record first
+                  </p>
+                </div>
+
+                <button
+                  className="download-button"
+                  onClick={() =>
+                    window.open('/ebola_dataset.json', '_blank')
+                  }
+                >
+                  View JSON data
+                </button>
+              </div>
+
+              <div className="table-scroll">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Report #</th>
+                      <th>Confirmed cases</th>
+                      <th>Confirmed deaths</th>
+                      <th>Weekly new cases</th>
+                      <th>Weekly new deaths</th>
+                      <th>Calculated CFR</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {[...chartRows].reverse().map((row) => (
+                      <tr key={row.date}>
+                        <td>
+                          {new Date(
+                            `${row.date}T00:00:00`
+                          ).toLocaleDateString('en-GB', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric',
+                          })}
+                        </td>
+
+                        <td>{row.report_number}</td>
+
+                        <td>
+                          {fmt(row.cumulative_confirmed_cases)}
+                        </td>
+
+                        <td>
+                          {fmt(row.cumulative_confirmed_deaths)}
+                        </td>
+
+                        <td>
+                          {fmt(row.weekly_new_confirmed_cases)}
+                        </td>
+
+                        <td>
+                          {fmt(row.weekly_new_confirmed_deaths)}
+                        </td>
+
+                        <td>
+                          {fmt(row.calculated_cfr_percent)}%
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </article>
+          </div>
+        )}
+
+        {/* ================= MATHEMATICAL MODEL ================= */}
+
+        {page === 'model' && (
+          <div className="content-page">
+            <SectionTitle
+              eyebrow="SCIENTIFIC WORKSPACE"
+              title="Ebola mathematical model"
+              text="Explore the numerical solution of an illustrative SEIRD compartmental model using the deployed Python API."
+            />
+
+            <div className="notice">
+              <CircleAlert size={18} />
+
+              <div>
+                <b>Important model limitations</b>
+
+                <p>
+                  The simulation uses illustrative parameters that
+                  have not been calibrated to the supplied dataset.
+                  Its output is a mathematical demonstration, not a
+                  validated Ebola forecast. A more realistic
+                  disease-specific model may need to represent
+                  transmission from infectious people, including
+                  transmission associated with caregiving and
+                  funerals.
+                </p>
+              </div>
+            </div>
+
+            <div className="equation-grid">
+              <article className="equation-card">
+                <span className="equation-label">
+                  STATE VARIABLES
+                </span>
+
+                <h3>Compartment definitions</h3>
+
+                <div className="state-row">
+                  <b>S(t)</b>
+                  <span>Susceptible population</span>
+                </div>
+
+                <div className="state-row">
+                  <b>E(t)</b>
+                  <span>Exposed population</span>
+                </div>
+
+                <div className="state-row">
+                  <b>I(t)</b>
+                  <span>Infectious population</span>
+                </div>
+
+                <div className="state-row">
+                  <b>R(t)</b>
+                  <span>Recovered population</span>
+                </div>
+
+                <div className="state-row">
+                  <b>D(t)</b>
+                  <span>Deaths attributed to disease</span>
+                </div>
+
+                <p className="equation-foot">
+                  These are the state variables used by the
+                  illustrative simulation API.
+                </p>
+              </article>
+
+              <article className="equation-card">
+                <span className="equation-label">
+                  DIFFERENTIAL EQUATIONS
+                </span>
+
+                <h3>SEIRD model structure</h3>
+
+                <div className="math-line">
+                  dS/dt = −βSI/N
+                </div>
+
+                <div className="math-line">
+                  dE/dt = βSI/N − σE
+                </div>
+
+                <div className="math-line">
+                  dI/dt = σE − (γ + μ)I
+                </div>
+
+                <div className="math-line">
+                  dR/dt = γI
+                </div>
+
+                <div className="math-line">
+                  dD/dt = μI
+                </div>
+
+                <p className="equation-foot">
+                  β is the transmission coefficient, σ is the
+                  exposed-to-infectious transition rate, γ is the
+                  recovery rate, and μ is the disease-death rate.
+                  N is the population used in the simulation.
+                </p>
+              </article>
+            </div>
+
+            {/* Simulation controls */}
+
+            <article className="panel table-panel">
+              <div className="panel-heading">
+                <div>
+                  <h3>Numerical ODE simulation</h3>
+
+                  <p>
+                    Python · SciPy solve_ivp · RK45 · 180 days
+                  </p>
+                </div>
+
+                <button
+                  className="primary-button"
+                  onClick={runSimulation}
+                  disabled={simulationLoading}
+                >
+                  <FlaskConical size={17} />
+
+                  {simulationLoading
+                    ? 'Running simulation…'
+                    : simulation
+                      ? 'Run again'
+                      : 'Run simulation'}
+                </button>
+              </div>
+
+              {simulationError && (
+                <div className="notice">
+                  <CircleAlert size={18} />
+
+                  <div>
+                    <b>Simulation failed</b>
+
+                    <p>{simulationError}</p>
+
+                    <p>
+                      Check the deployed API and Vercel function
+                      logs, then try again.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {!simulation && !simulationError && (
+                <div className="empty-state">
+                  <div className="empty-icon">
+                    <FlaskConical size={25} />
+                  </div>
+
+                  <h3>Ready to run the simulation</h3>
+
+                  <p>
+                    Click “Run simulation” to retrieve the numerical
+                    solution from your deployed Python API.
+                  </p>
+                </div>
+              )}
+
+              {simulation && (
+                <>
+                  <div className="notice">
+                    <Activity size={18} />
+
+                    <div>
+                      <b>
+                        {simulation.model_type ||
+                          'Illustrative SEIRD simulation'}
+                      </b>
+
+                      <p>
+                        {simulation.warning ||
+                          'Illustrative output only. Parameters have not been calibrated to the dataset.'}
+                      </p>
+
+                      <p>
+                        Simulation duration:{' '}
+                        {simulation.chartRows.length - 1} days.
+                      </p>
+                    </div>
+                  </div>
+
+                  <section className="stats-grid">
+                    <StatCard
+                      label="Final susceptible"
+                      value={fmt(
+                        simulation.chartRows.at(-1)?.susceptible
+                      )}
+                      note="End of simulation"
+                      icon={Activity}
+                      accent="blue"
+                    />
+
+                    <StatCard
+                      label="Final exposed"
+                      value={fmt(
+                        simulation.chartRows.at(-1)?.exposed
+                      )}
+                      note="End of simulation"
+                      icon={CalendarDays}
+                      accent="violet"
+                    />
+
+                    <StatCard
+                      label="Final infectious"
+                      value={fmt(
+                        simulation.chartRows.at(-1)?.infectious
+                      )}
+                      note="End of simulation"
+                      icon={CircleAlert}
+                      accent="red"
+                    />
+
+                    <StatCard
+                      label="Cumulative model deaths"
+                      value={fmt(
+                        simulation.chartRows.at(-1)?.deaths
+                      )}
+                      note="End of simulation"
+                      icon={ShieldCheck}
+                      accent="green"
+                    />
+                  </section>
+
+                  <article className="panel chart-panel">
+                    <div className="panel-heading">
+                      <div>
+                        <h3>SEIRD population trajectories</h3>
+
+                        <p>
+                          Modelled compartments over time
+                        </p>
+                      </div>
+
+                      <span className="chart-badge">
+                        NUMERICAL SIMULATION
+                      </span>
+                    </div>
+
+                    <div className="chart-wrap">
+                      <ResponsiveContainer
+                        width="100%"
+                        height="100%"
+                      >
+                        <LineChart
+                          data={simulation.chartRows}
+                          margin={{
+                            top: 10,
+                            right: 15,
+                            left: 10,
+                            bottom: 5,
+                          }}
+                        >
+                          <CartesianGrid
+                            stroke="#29313b"
+                            strokeDasharray="3 5"
+                            vertical={false}
+                          />
+
+                          <XAxis
+                            dataKey="day"
+                            type="number"
+                            domain={[0, 'dataMax']}
+                            tick={{
+                              fill: '#8d9aaa',
+                              fontSize: 11,
+                            }}
+                            axisLine={false}
+                            tickLine={false}
+                            label={{
+                              value: 'Time (days)',
+                              position: 'insideBottom',
+                              offset: -2,
+                              fill: '#8d9aaa',
+                            }}
+                          />
+
+                          <YAxis
+                            tick={{
+                              fill: '#8d9aaa',
+                              fontSize: 11,
+                            }}
+                            axisLine={false}
+                            tickLine={false}
+                            tickFormatter={(value) =>
+                              value >= 1000
+                                ? `${(value / 1000).toFixed(1)}k`
+                                : value
+                            }
+                          />
+
+                          <Tooltip
+                            contentStyle={{
+                              background: '#171d25',
+                              border: '1px solid #303b47',
+                              borderRadius: 10,
+                              color: '#edf3f7',
+                            }}
+                            labelFormatter={(day) =>
+                              `Day ${day}`
+                            }
+                            formatter={(value) => fmt(value)}
+                          />
+
+                          <Legend />
+
+                          <Line
+                            type="monotone"
+                            dataKey="susceptible"
+                            name="Susceptible (S)"
+                            stroke="#48c6cf"
+                            strokeWidth={2}
+                            dot={false}
+                          />
+
+                          <Line
+                            type="monotone"
+                            dataKey="exposed"
+                            name="Exposed (E)"
+                            stroke="#9d8cff"
+                            strokeWidth={2}
+                            dot={false}
+                          />
+
+                          <Line
+                            type="monotone"
+                            dataKey="infectious"
+                            name="Infectious (I)"
+                            stroke="#ff7187"
+                            strokeWidth={2}
+                            dot={false}
+                          />
+
+                          <Line
+                            type="monotone"
+                            dataKey="recovered"
+                            name="Recovered (R)"
+                            stroke="#55c99a"
+                            strokeWidth={2}
+                            dot={false}
+                          />
+
+                          <Line
+                            type="monotone"
+                            dataKey="deaths"
+                            name="Deaths (D)"
+                            stroke="#f0ad4e"
+                            strokeWidth={2}
+                            dot={false}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </article>
+
+                  <article className="panel table-panel">
+                    <div className="panel-heading">
+                      <div>
+                        <h3>Simulation results</h3>
+
+                        <p>
+                          First and last numerical solution
+                          records
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="table-scroll">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Day</th>
+                            <th>Susceptible</th>
+                            <th>Exposed</th>
+                            <th>Infectious</th>
+                            <th>Recovered</th>
+                            <th>Deaths</th>
+                          </tr>
+                        </thead>
+
+                        <tbody>
+                          {[
+                            simulation.chartRows[0],
+                            simulation.chartRows.at(-1),
+                          ]
+                            .filter(Boolean)
+                            .map((row, index) => (
+                              <tr
+                                key={`${row.day}-${index}`}
+                              >
+                                <td>{row.day}</td>
+
+                                <td>{fmt(row.susceptible)}</td>
+
+                                <td>{fmt(row.exposed)}</td>
+
+                                <td>{fmt(row.infectious)}</td>
+
+                                <td>{fmt(row.recovered)}</td>
+
+                                <td>{fmt(row.deaths)}</td>
+                              </tr>
+                            ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </article>
+                </>
+              )}
+            </article>
+          </div>
+        )}
+
+        {/* ================= PINN WORKSPACE ================= */}
+
+        {page === 'pinn' && (
+          <div className="content-page">
+            <SectionTitle
+              eyebrow="PHYSICS-INFORMED LEARNING"
+              title="PINN workspace"
+              text="The PINN will be developed after the mathematical model, parameter assumptions, and observation mapping are defined."
+            />
+
+            <div className="pinn-banner">
+              <div className="pinn-symbol">
+                <GitBranch size={30} />
+              </div>
+
+              <div>
+                <span className="eyebrow">
+                  NEXT RESEARCH MILESTONE
+                </span>
+
+                <h2>
+                  Combine data fit with equation consistency
+                </h2>
+
+                <p>
+                  A Physics-Informed Neural Network can combine
+                  agreement with observations and consistency with
+                  governing differential equations. This does not
+                  automatically guarantee accurate forecasts.
+                </p>
+              </div>
+            </div>
+
+            <div className="loss-grid">
+              <article className="loss-card">
+                <span>01 · DATA LOSS</span>
+
+                <h3>Match observations</h3>
+
+                <p>
+                  Measures the mismatch between model outputs and
+                  selected observations using a clearly defined
+                  mapping between reported cases and model
+                  compartments.
+                </p>
+              </article>
+
+              <article className="loss-card">
+                <span>02 · PHYSICS LOSS</span>
+
+                <h3>Respect the ODEs</h3>
+
+                <p>
+                  Penalizes residuals when predicted states and
+                  their time derivatives fail to satisfy the
+                  selected differential equations.
+                </p>
+              </article>
+
+              <article className="loss-card loss-total">
+                <span>COMBINED OBJECTIVE</span>
+
+                <div className="math-line">
+                  L = L<sub>data</sub> + λL<sub>physics</sub>
+                </div>
+
+                <p>
+                  The parameter λ balances the data and physics
+                  losses and must be selected and evaluated
+                  carefully.
+                </p>
+              </article>
+            </div>
+
+            <EmptyState
+              icon={Microscope}
+              title="PINN not trained for Ebola yet"
+              text="The simulation API is not a trained PINN. Training and validation will be a separate implementation phase."
+            />
+          </div>
+        )}
+    {page === 'map' && (
+      <div className="content-page">
+        <SectionTitle
+          eyebrow="GLOBAL OUTBREAK SURVEILLANCE"
+          title="Outbreak Intelligence Map"
+          text="Explore historical outbreak locations and available outbreak information."
+        />
+        <OutbreakMap />
+      </div>
+    )}
+        <footer className="footer">
+          <span>
+            OUTBREAK INTELLIGENCE · MATHEMATICAL MODELLING PROJECT
+          </span>
+
+          <span>
+            Research prototype · Not for clinical or public-health
+            decision-making
+          </span>
+        </footer>
+      </main>
+    </div>
+  );
 }
