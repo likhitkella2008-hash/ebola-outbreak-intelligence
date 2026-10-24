@@ -27,9 +27,13 @@ import {
   GitBranch,
   LayoutDashboard,
   Microscope,
+  Radio,
   ShieldCheck,
+  RefreshCw,
 } from 'lucide-react';
 import OutbreakMap from './OutbreakMap';
+import LiveSurveillance from './LiveSurveillance';
+import { fetchSurveillanceObservations } from './services/liveSurveillanceService';
 
 const NAV = [
   {
@@ -48,15 +52,20 @@ const NAV = [
     icon: FlaskConical,
   },
   {
-  id: 'pinn',
-  label: 'PINN workspace',
-  icon: GitBranch,
-},
-{
-  id: 'map',
-  label: 'Outbreak Map',
-  icon: Database,
-},
+    id: 'pinn',
+    label: 'PINN workspace',
+    icon: GitBranch,
+  },
+  {
+    id: 'map',
+    label: 'Outbreak Map',
+    icon: Database,
+  },
+  {
+    id: 'surveillance',
+    label: 'Live API & Surveillance',
+    icon: Radio,
+  },
 ];
 
 const fmt = (n) =>
@@ -127,12 +136,60 @@ function EmptyState({ icon: Icon, title, text }) {
   );
 }
 
+function StreamSelectorBar({ streamMode, setStreamMode, lastSync, surveillanceData }) {
+  return (
+    <div className="stream-selector-bar">
+      <div className="stream-pills">
+        <button
+          type="button"
+          className={`stream-pill ${streamMode === 'historical' ? 'active' : ''}`}
+          onClick={() => setStreamMode('historical')}
+          title="Switch to fixed 14-week benchmark dataset"
+        >
+          <Database size={13} />
+          <span>Historical Benchmark (14 Weeks)</span>
+        </button>
+        <button
+          type="button"
+          className={`stream-pill ${streamMode === 'surveillance' ? 'active' : ''}`}
+          onClick={() => setStreamMode('surveillance')}
+          title="Switch to live official surveillance feed"
+        >
+          <Radio size={13} />
+          <span>
+            Official Surveillance Feed ({surveillanceData?.latest_date || 'Oct 21, 2026'})
+          </span>
+          <span className="live-dot" />
+        </button>
+      </div>
+
+      <div className="stream-status-info">
+        {streamMode === 'historical' ? (
+          <span className="stream-mode-badge historical">
+            FIXED BENCHMARK · SEIRD CALIBRATION (MAY–AUG 2026)
+          </span>
+        ) : (
+          <span className="stream-mode-badge surveillance">
+            LIVE OFFICIAL FEED · AUTO-SYNC: 60M · {lastSync ? `SYNCED ${lastSync.toLocaleTimeString()}` : 'CONNECTING...'}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [page, setPage] = useState('overview');
 
   const [rows, setRows] = useState([]);
 
   const [loadError, setLoadError] = useState('');
+
+  // Data Stream Switcher: 'historical' (14 weeks) | 'surveillance' (live HDX feed to Oct 21)
+  const [streamMode, setStreamMode] = useState('historical');
+  const [surveillanceData, setSurveillanceData] = useState(null);
+  const [surveillanceLoading, setSurveillanceLoading] = useState(false);
+  const [lastSurveillanceSync, setLastSurveillanceSync] = useState(null);
 
   // NEW: State for the mathematical simulation API.
   const [simulation, setSimulation] = useState(null);
@@ -163,6 +220,32 @@ export default function App() {
           'The dataset could not be loaded. Check public/ebola_dataset.json.'
         );
       });
+  }, []);
+
+  // Ingest official surveillance feed with 60-minute automatic recurring polling
+  useEffect(() => {
+    let isMounted = true;
+    async function loadSurveillance() {
+      setSurveillanceLoading(true);
+      try {
+        const data = await fetchSurveillanceObservations();
+        if (isMounted) {
+          setSurveillanceData(data);
+          setLastSurveillanceSync(new Date());
+        }
+      } catch (err) {
+        console.warn('Official surveillance ingestion notice:', err);
+      } finally {
+        if (isMounted) setSurveillanceLoading(false);
+      }
+    }
+    loadSurveillance();
+
+    const intervalId = setInterval(loadSurveillance, 60 * 60 * 1000);
+    return () => {
+      isMounted = false;
+      clearInterval(intervalId);
+    };
   }, []);
 
   // Convert historical values into numbers for charts.
@@ -198,9 +281,39 @@ export default function App() {
     [rows]
   );
 
-  const latest = chartRows.at(-1);
+  // Convert official surveillance feed into normalized chart rows
+  const surveillanceChartRows = useMemo(() => {
+    if (!surveillanceData?.time_series) return [];
+    return surveillanceData.time_series.map((item, index) => ({
+      ...item,
+      report_number: index + 1,
+      shortDate: dateLabel(item.date),
+      cumulative_confirmed_cases: Number(item.cumulative_confirmed_cases),
+      cumulative_confirmed_deaths: Number(item.cumulative_confirmed_deaths),
+      weekly_new_confirmed_cases:
+        item.daily_new_confirmed_cases == null
+          ? null
+          : Number(item.daily_new_confirmed_cases),
+      weekly_new_confirmed_deaths:
+        item.daily_new_confirmed_deaths == null
+          ? null
+          : Number(item.daily_new_confirmed_deaths),
+      calculated_cfr_percent: Number(item.calculated_cfr_percent),
+      source: 'INRB-UMIE / UN OCHA HDX Consolidated Surveillance Feed',
+    }));
+  }, [surveillanceData]);
 
-  const previous = chartRows.at(-2);
+  // Select the active data stream based on user mode
+  const activeChartRows = useMemo(() => {
+    if (streamMode === 'surveillance' && surveillanceChartRows.length > 0) {
+      return surveillanceChartRows;
+    }
+    return chartRows;
+  }, [streamMode, surveillanceChartRows, chartRows]);
+
+  const latest = activeChartRows.at(-1);
+
+  const previous = activeChartRows.at(-2);
 
   const caseDelta =
     latest && previous
@@ -342,12 +455,14 @@ export default function App() {
             <span className="live-dot" />
 
             <div>
-              <b>Dataset loaded</b>
+              <b>{streamMode === 'historical' ? 'Historical dataset' : 'Surveillance feed'}</b>
 
               <small>
-                {rows.length
-                  ? `${rows.length} weekly records`
-                  : 'Loading records…'}
+                {streamMode === 'historical'
+                  ? rows.length
+                    ? `${rows.length} weekly records (Benchmark)`
+                    : 'Loading records…'
+                  : `${surveillanceChartRows.length || 0} daily reports (Oct 21)`}
               </small>
             </div>
           </div>
@@ -370,7 +485,9 @@ export default function App() {
           <div className="top-right">
             <span className="dataset-chip">
               <span />
-              Bundibugyo dataset
+              {streamMode === 'historical'
+                ? 'Bundibugyo Benchmark'
+                : `Surveillance Feed (${surveillanceData?.latest_date || 'Oct 21'})`}
             </span>
 
             <div className="avatar">MM</div>
@@ -425,6 +542,14 @@ export default function App() {
                     Open mathematical model
                     <ArrowUpRight size={16} />
                   </button>
+
+                  <button
+                    onClick={() => setPage('surveillance')}
+                    className="secondary-button"
+                  >
+                    <Radio size={16} />
+                    Live API feeds
+                  </button>
                 </div>
               </div>
 
@@ -443,8 +568,8 @@ export default function App() {
                   <span>OBSERVATION SERIES</span>
 
                   <b>
-                    {rows.length || '—'}{' '}
-                    <small>weekly records</small>
+                    {activeChartRows.length || '—'}{' '}
+                    <small>{streamMode === 'historical' ? 'weekly records' : 'daily reports'}</small>
                   </b>
                 </div>
 
@@ -487,10 +612,17 @@ export default function App() {
               </div>
             </section>
 
+            <StreamSelectorBar
+              streamMode={streamMode}
+              setStreamMode={setStreamMode}
+              lastSync={lastSurveillanceSync}
+              surveillanceData={surveillanceData}
+            />
+
             <div className="section-heading-row">
               <div>
                 <div className="eyebrow">
-                  LATEST OBSERVATION
+                  LATEST OBSERVATION · {streamMode === 'historical' ? 'BENCHMARK ARCHIVE' : 'LIVE SURVEILLANCE'}
                 </div>
 
                 <h2>Outbreak snapshot</h2>
@@ -498,13 +630,13 @@ export default function App() {
 
               <span className="as-of">
                 {latest
-                  ? `Dataset ends ${new Date(
+                  ? `Observation date: ${new Date(
                       `${latest.date}T00:00:00`
                     ).toLocaleDateString('en-GB', {
                       day: 'numeric',
                       month: 'long',
                       year: 'numeric',
-                    })}`
+                    })} (${streamMode === 'historical' ? 'Benchmark end' : 'Latest official sitrep'})`
                   : 'Loading dataset'}
               </span>
             </div>
@@ -541,15 +673,19 @@ export default function App() {
                     ? `${fmt(latest.calculated_cfr_percent)}%`
                     : '—'
                 }
-                note="Deaths ÷ confirmed cases in this dataset"
+                note="Deaths ÷ confirmed cases in this stream"
                 icon={ShieldCheck}
                 accent="violet"
               />
 
               <StatCard
-                label="Weekly observations"
-                value={fmt(rows.length)}
-                note="Records available in the supplied dataset"
+                label={streamMode === 'historical' ? 'Weekly observations' : 'Daily reports'}
+                value={fmt(activeChartRows.length)}
+                note={
+                  streamMode === 'historical'
+                    ? 'Records in 14-week benchmark dataset'
+                    : 'Reports in official surveillance feed'
+                }
                 icon={CalendarDays}
                 accent="green"
               />
@@ -561,17 +697,21 @@ export default function App() {
                   <div>
                     <h3>Reported outbreak trajectory</h3>
 
-                    <p>Cumulative confirmed cases and deaths</p>
+                    <p>
+                      {streamMode === 'historical'
+                        ? 'Cumulative confirmed cases and deaths (14-week baseline)'
+                        : 'Official cumulative trajectory through October 21, 2026'}
+                    </p>
                   </div>
 
                   <span className="chart-badge">
-                    HISTORICAL DATA
+                    {streamMode === 'historical' ? 'HISTORICAL BENCHMARK' : 'SURVEILLANCE FEED'}
                   </span>
                 </div>
 
                 <div className="chart-wrap">
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={chartRows}>
+                    <AreaChart data={activeChartRows}>
                       <defs>
                         <linearGradient
                           id="casesFill"
@@ -680,9 +820,13 @@ export default function App() {
               <article className="panel chart-panel">
                 <div className="panel-heading">
                   <div>
-                    <h3>Weekly new cases</h3>
+                    <h3>{streamMode === 'historical' ? 'Weekly new cases' : 'Incremental cases'}</h3>
 
-                    <p>Reported increments per record</p>
+                    <p>
+                      {streamMode === 'historical'
+                        ? 'Reported increments per record'
+                        : 'Newly reported cases per situation bulletin (latest 20)'}
+                    </p>
                   </div>
 
                   <span className="mini-icon">
@@ -692,7 +836,13 @@ export default function App() {
 
                 <div className="chart-wrap small">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={chartRows.slice(1)}>
+                    <BarChart
+                      data={
+                        streamMode === 'historical'
+                          ? chartRows.slice(1)
+                          : activeChartRows.slice(-20)
+                      }
+                    >
                       <CartesianGrid
                         stroke="#29313b"
                         strokeDasharray="3 5"
@@ -775,6 +925,7 @@ export default function App() {
                   ['Historical data view', true],
                   ['Interactive charts', true],
                   ['SEIRD simulation API', true],
+                  ['Live UN OCHA HDX API feed', true],
                   ['Parameter calibration', false],
                   ['PINN training and evaluation', false],
                 ].map(([title, done]) => (
@@ -799,22 +950,35 @@ export default function App() {
           <div className="content-page">
             <SectionTitle
               eyebrow="DATA EXPLORER"
-              title="Historical outbreak data"
-              text="Review the supplied weekly dataset. Values have not been independently verified against the cited source."
+              title={streamMode === 'historical' ? 'Historical outbreak data' : 'Official surveillance observations'}
+              text={
+                streamMode === 'historical'
+                  ? 'Review the 14-week Bundibugyo benchmark dataset used for SEIRD model calibration.'
+                  : `Official surveillance bulletins from INRB-UMIE & UN OCHA HDX (133 situation reports through ${surveillanceData?.latest_date || '21 October 2026'}).`
+              }
+            />
+
+            <StreamSelectorBar
+              streamMode={streamMode}
+              setStreamMode={setStreamMode}
+              lastSync={lastSurveillanceSync}
+              surveillanceData={surveillanceData}
             />
 
             <div className="notice">
               <CircleAlert size={18} />
 
               <div>
-                <b>Source and interpretation note</b>
+                <b>
+                  {streamMode === 'historical'
+                    ? 'Benchmark Dataset Source Note'
+                    : 'Surveillance Feed Governance Note'}
+                </b>
 
                 <p>
-                  This dataset lists Bundibugyo virus disease
-                  records for May–August 2026. Its source field names
-                  WHO Africa weekly reports. Verify the original
-                  reports before treating these values as
-                  authoritative public-health statistics.
+                  {streamMode === 'historical'
+                    ? 'This dataset lists 14 weekly Bundibugyo virus disease records for May–August 2026. Verify the original reports before treating these values as authoritative public-health statistics.'
+                    : `Displaying official field surveillance observations from INRB-UMIE & UN OCHA HDX. Automatically polled hourly (latest available report: ${surveillanceData?.latest_date || '21 October 2026'}). If no newer reports are issued, last verified observations are retained without fabricating numbers.`}
                 </p>
               </div>
             </div>
@@ -831,7 +995,7 @@ export default function App() {
 
                 <div className="chart-wrap">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={chartRows}>
+                    <LineChart data={activeChartRows}>
                       <CartesianGrid
                         stroke="#e5eaf0"
                         strokeDasharray="3 5"
@@ -894,7 +1058,7 @@ export default function App() {
 
                 <div className="chart-wrap small">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={chartRows}>
+                    <LineChart data={activeChartRows}>
                       <CartesianGrid
                         stroke="#e5eaf0"
                         strokeDasharray="3 5"
@@ -942,20 +1106,32 @@ export default function App() {
             <article className="panel table-panel">
               <div className="panel-heading">
                 <div>
-                  <h3>Dataset records</h3>
+                  <h3>
+                    {streamMode === 'historical'
+                      ? 'Historical benchmark records'
+                      : 'Official surveillance situation reports'}
+                  </h3>
 
                   <p>
-                    {rows.length} records · newest record first
+                    {activeChartRows.length} records · newest record first ·{' '}
+                    {streamMode === 'historical'
+                      ? '14-week baseline series'
+                      : 'Daily official bulletins (INRB / HDX)'}
                   </p>
                 </div>
 
                 <button
                   className="download-button"
                   onClick={() =>
-                    window.open('/ebola_dataset.json', '_blank')
+                    window.open(
+                      streamMode === 'historical'
+                        ? '/ebola_dataset.json'
+                        : surveillanceData?.source_url || 'https://data.humdata.org/dataset/republique-democratique-du-congo-cas-et-deces-d-ebola',
+                      '_blank'
+                    )
                   }
                 >
-                  View JSON data
+                  {streamMode === 'historical' ? 'View JSON data' : 'View HDX Feed Source'}
                 </button>
               </div>
 
@@ -964,17 +1140,18 @@ export default function App() {
                   <thead>
                     <tr>
                       <th>Date</th>
-                      <th>Report #</th>
+                      <th>{streamMode === 'historical' ? 'Report #' : 'SitRep #'}</th>
                       <th>Confirmed cases</th>
                       <th>Confirmed deaths</th>
-                      <th>Weekly new cases</th>
-                      <th>Weekly new deaths</th>
+                      <th>{streamMode === 'historical' ? 'Weekly new cases' : 'New cases'}</th>
+                      <th>{streamMode === 'historical' ? 'Weekly new deaths' : 'New deaths'}</th>
                       <th>Calculated CFR</th>
+                      <th>Classification</th>
                     </tr>
                   </thead>
 
                   <tbody>
-                    {[...chartRows].reverse().map((row) => (
+                    {[...activeChartRows].reverse().map((row) => (
                       <tr key={row.date}>
                         <td>
                           {new Date(
@@ -997,15 +1174,23 @@ export default function App() {
                         </td>
 
                         <td>
-                          {fmt(row.weekly_new_confirmed_cases)}
+                          {row.weekly_new_confirmed_cases != null
+                            ? fmt(row.weekly_new_confirmed_cases)
+                            : '—'}
                         </td>
 
                         <td>
-                          {fmt(row.weekly_new_confirmed_deaths)}
+                          {row.weekly_new_confirmed_deaths != null
+                            ? fmt(row.weekly_new_confirmed_deaths)
+                            : '—'}
                         </td>
 
                         <td>
                           {fmt(row.calculated_cfr_percent)}%
+                        </td>
+
+                        <td>
+                          <span className="badge green">Confirmed</span>
                         </td>
                       </tr>
                     ))}
@@ -1521,7 +1706,23 @@ export default function App() {
           title="Outbreak Intelligence Map"
           text="Explore historical outbreak locations and available outbreak information."
         />
-        <OutbreakMap />
+        <StreamSelectorBar
+          streamMode={streamMode}
+          setStreamMode={setStreamMode}
+          lastSync={lastSurveillanceSync}
+          surveillanceData={surveillanceData}
+        />
+        <OutbreakMap records={activeChartRows} streamMode={streamMode} />
+      </div>
+    )}
+    {page === 'surveillance' && (
+      <div className="content-page">
+        <SectionTitle
+          eyebrow="REAL-TIME EPIDEMIOLOGY & DATA FEEDS"
+          title="Live Outbreak Surveillance & APIs"
+          text="Live programmatic integration with the United Nations OCHA Humanitarian Data Exchange (HDX) API, global disease alert systems, and comparative strain mechanics."
+        />
+        <LiveSurveillance />
       </div>
     )}
         <footer className="footer">

@@ -33,13 +33,21 @@ function formatNumber(value) {
   return value == null ? "N/A" : Number(value).toLocaleString();
 }
 
-export default function OutbreakMap() {
-  const [records, setRecords] = useState([]);
+export default function OutbreakMap({ records: externalRecords, streamMode = 'historical' }) {
+  const [localRecords, setLocalRecords] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!externalRecords || externalRecords.length === 0);
   const [error, setError] = useState("");
 
+  const records = externalRecords && externalRecords.length > 0 ? externalRecords : localRecords;
+
   useEffect(() => {
+    if (externalRecords && externalRecords.length > 0) {
+      setSelectedIndex(externalRecords.length - 1);
+      setLoading(false);
+      return;
+    }
+
     let cancelled = false;
 
     async function loadDataset() {
@@ -66,7 +74,7 @@ export default function OutbreakMap() {
         );
 
         if (!cancelled) {
-          setRecords(sortedData);
+          setLocalRecords(sortedData);
           setSelectedIndex(sortedData.length - 1);
         }
       } catch (err) {
@@ -85,7 +93,7 @@ export default function OutbreakMap() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [externalRecords]);
 
   const selected = records[selectedIndex] ?? null;
 
@@ -141,16 +149,19 @@ export default function OutbreakMap() {
     <div className="outbreak-map-page">
       <div className="outbreak-map-heading">
         <div>
-          <span className="eyebrow">GEOSPATIAL INTELLIGENCE</span>
+          <span className="eyebrow">
+            GEOSPATIAL INTELLIGENCE · {streamMode === 'historical' ? 'HISTORICAL BENCHMARK' : 'OFFICIAL SURVEILLANCE FEED'}
+          </span>
           <h1>Outbreak Intelligence Map</h1>
           <p>
-            Explore the reported weekly outbreak statistics and
-            their historical progression.
+            {streamMode === 'historical'
+              ? 'Explore the reported weekly outbreak statistics and their historical progression.'
+              : 'Explore official surveillance situation reports across the monitored outbreak region.'}
           </p>
         </div>
 
         <span className="map-status">
-          {records.length} WEEKLY RECORDS
+          {records.length} {streamMode === 'historical' ? 'WEEKLY RECORDS' : 'DAILY REPORTS'}
         </span>
       </div>
 
