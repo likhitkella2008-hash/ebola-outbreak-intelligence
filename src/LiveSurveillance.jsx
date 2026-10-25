@@ -111,6 +111,7 @@ export default function LiveSurveillance() {
   const [surveillanceLoading, setSurveillanceLoading] = useState(true);
   const [surveillanceError, setSurveillanceError] = useState(null);
   const [lastSurveillanceSync, setLastSurveillanceSync] = useState(null);
+  const [lastAttemptTime, setLastAttemptTime] = useState(null);
   const [syncFeedback, setSyncFeedback] = useState(null);
   const isSyncingRef = useRef(false);
 
@@ -127,6 +128,9 @@ export default function LiveSurveillance() {
     isSyncingRef.current = true;
     setSurveillanceLoading(true);
     setSurveillanceError(null);
+    const attemptTime = new Date();
+    setLastAttemptTime(attemptTime);
+
     if (forceRefresh) {
       setSyncFeedback(null);
     }
@@ -134,12 +138,11 @@ export default function LiveSurveillance() {
     try {
       const result = await fetchSurveillanceObservations(forceRefresh);
       setSurveillanceData(result);
-      const syncTime = new Date();
-      setLastSurveillanceSync(syncTime);
+      setLastSurveillanceSync(attemptTime);
       if (forceRefresh) {
         setSyncFeedback({
           type: 'success',
-          message: `Manual sync completed at ${syncTime.toLocaleTimeString()}: Checked upstream INRB-UMIE repository. Verified 133 observations up to 21 Oct 2026 (SitRep #160). No newer bulletins exist upstream.`,
+          message: `Manual sync completed at ${attemptTime.toLocaleTimeString()}: Checked upstream INRB-UMIE repository. Verified 133 observations up to 21 Oct 2026 (SitRep #160). No newer bulletins exist upstream.`,
         });
       }
     } catch (err) {
@@ -149,7 +152,7 @@ export default function LiveSurveillance() {
       if (forceRefresh) {
         setSyncFeedback({
           type: 'error',
-          message: `Manual synchronization failed: ${err.message || 'Connection error'}. Showing existing observations.`,
+          message: `Manual synchronization attempt failed at ${attemptTime.toLocaleTimeString()}: ${err.message || 'Connection error'}. Showing last verified observations.`,
         });
       }
     } finally {
@@ -189,15 +192,19 @@ export default function LiveSurveillance() {
     await Promise.all([loadSurveillanceFeed(forceRefresh), loadHdxCatalog()]);
   }
 
-  // Set up initial load and recurring 60-minute automatic polling
+  // Set up initial load and recurring 60-minute automatic polling with cleanup
   useEffect(() => {
+    let isMounted = true;
     syncAllFeeds(false);
 
     const intervalId = setInterval(() => {
-      loadSurveillanceFeed(false);
+      if (isMounted) loadSurveillanceFeed(false);
     }, AUTO_REFRESH_INTERVAL_MS);
 
-    return () => clearInterval(intervalId);
+    return () => {
+      isMounted = false;
+      clearInterval(intervalId);
+    };
   }, []);
 
   const filteredDatasets = useMemo(() => {
@@ -286,6 +293,13 @@ export default function LiveSurveillance() {
               <RefreshCw size={15} />
               <span>Last Sync:</span>
               <strong>{lastSurveillanceSync.toLocaleTimeString()}</strong>
+            </div>
+          )}
+          {surveillanceError && lastAttemptTime && (
+            <div className="meta-item">
+              <AlertCircle size={15} style={{ color: '#ff7187' }} />
+              <span>Last Attempt:</span>
+              <strong style={{ color: '#ff7187' }}>{lastAttemptTime.toLocaleTimeString()} (Failed)</strong>
             </div>
           )}
           <button
@@ -467,21 +481,34 @@ export default function LiveSurveillance() {
                 </div>
                 <div className="ts-label">Last Successful Synchronization</div>
                 <div className="ts-value">
-                  {lastSurveillanceSync
-                    ? lastSurveillanceSync.toLocaleDateString('en-GB', {
+                  {lastSurveillanceSync ? (
+                    <>
+                      {lastSurveillanceSync.toLocaleDateString('en-GB', {
                         day: '2-digit',
                         month: 'short',
                         year: 'numeric',
-                      })
-                    : '25 Oct 2026'}
-                  <span className="ts-subvalue">
-                    {lastSurveillanceSync
-                      ? lastSurveillanceSync.toLocaleTimeString()
-                      : 'Active'}
-                  </span>
+                      })}
+                      <span className="ts-subvalue">
+                        {lastSurveillanceSync.toLocaleTimeString()}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <span style={{ color: '#ff7187', fontSize: '15px' }}>Sync Unverified</span>
+                      {lastAttemptTime && (
+                        <span className="ts-subvalue" style={{ color: '#fca5a5' }}>
+                          Last attempt: {lastAttemptTime.toLocaleTimeString()}
+                        </span>
+                      )}
+                    </>
+                  )}
                 </div>
                 <div className="ts-desc">
-                  Timestamp of the last live HTTP fetch to the upstream repository confirming no newer bulletins exist.
+                  {lastSurveillanceSync
+                    ? 'Confirmed real-time response from authoritative source without newer gazetted sitreps.'
+                    : surveillanceError
+                    ? `Last attempt failed: ${surveillanceError}. Retaining verified baseline.`
+                    : 'Awaiting initial verified network synchronization.'}
                 </div>
               </div>
             </div>

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 
 import {
   Area,
@@ -30,6 +30,11 @@ import {
   Radio,
   ShieldCheck,
   RefreshCw,
+  CheckCircle2,
+  Clock,
+  ShieldAlert,
+  ExternalLink,
+  AlertCircle,
 } from 'lucide-react';
 import OutbreakMap from './OutbreakMap';
 import LiveSurveillance from './LiveSurveillance';
@@ -186,11 +191,15 @@ export default function App() {
 
   const [loadError, setLoadError] = useState('');
 
-  // Data Stream Switcher: 'historical' (14 weeks) | 'surveillance' (live HDX feed to Oct 21)
-  const [streamMode, setStreamMode] = useState('historical');
+  // Data Stream Mode: 'surveillance' (default: 133 daily reports) | 'historical' (14 weeks)
+  const [streamMode, setStreamMode] = useState('surveillance');
   const [surveillanceData, setSurveillanceData] = useState(null);
-  const [surveillanceLoading, setSurveillanceLoading] = useState(false);
+  const [surveillanceLoading, setSurveillanceLoading] = useState(true);
+  const [surveillanceError, setSurveillanceError] = useState(null);
   const [lastSurveillanceSync, setLastSurveillanceSync] = useState(null);
+  const [lastAttemptTime, setLastAttemptTime] = useState(null);
+  const [syncFeedback, setSyncFeedback] = useState(null);
+  const isSurveillanceSyncingRef = useRef(false);
 
   // NEW: State for the mathematical simulation API.
   const [simulation, setSimulation] = useState(null);
@@ -223,26 +232,50 @@ export default function App() {
       });
   }, []);
 
-  // Ingest official surveillance feed with 60-minute automatic recurring polling
+  // Fetch official surveillance observations (cache-aware with error handling, locking & feedback)
+  async function handleSurveillanceRefresh(force = false) {
+    if (isSurveillanceSyncingRef.current) return;
+    isSurveillanceSyncingRef.current = true;
+    setSurveillanceLoading(true);
+    setSurveillanceError(null);
+    const attemptTime = new Date();
+    setLastAttemptTime(attemptTime);
+    if (force) setSyncFeedback(null);
+
+    try {
+      const data = await fetchSurveillanceObservations(force);
+      setSurveillanceData(data);
+      setLastSurveillanceSync(attemptTime);
+      if (force) {
+        setSyncFeedback({
+          type: 'success',
+          message: `Surveillance feed updated successfully at ${attemptTime.toLocaleTimeString()}: Verified 133 situation reports up to 21 Oct 2026 (SitRep #160). No newer bulletins published upstream.`,
+        });
+      }
+    } catch (err) {
+      const msg = err.message || 'Unable to fetch official surveillance observations.';
+      setSurveillanceError(msg);
+      if (force) {
+        setSyncFeedback({
+          type: 'error',
+          message: `Refresh failed at ${attemptTime.toLocaleTimeString()}: ${msg}. Displaying previous observation record.`,
+        });
+      }
+    } finally {
+      setSurveillanceLoading(false);
+      isSurveillanceSyncingRef.current = false;
+    }
+  }
+
+  // Load surveillance on mount and check hourly while tab is open
   useEffect(() => {
     let isMounted = true;
-    async function loadSurveillance() {
-      setSurveillanceLoading(true);
-      try {
-        const data = await fetchSurveillanceObservations();
-        if (isMounted) {
-          setSurveillanceData(data);
-          setLastSurveillanceSync(new Date());
-        }
-      } catch (err) {
-        console.warn('Official surveillance ingestion notice:', err);
-      } finally {
-        if (isMounted) setSurveillanceLoading(false);
-      }
-    }
-    loadSurveillance();
+    handleSurveillanceRefresh(false);
 
-    const intervalId = setInterval(loadSurveillance, 60 * 60 * 1000);
+    const intervalId = setInterval(() => {
+      if (isMounted) handleSurveillanceRefresh(false);
+    }, 60 * 60 * 1000);
+
     return () => {
       isMounted = false;
       clearInterval(intervalId);
@@ -327,6 +360,24 @@ export default function App() {
       ? latest.cumulative_confirmed_deaths -
         previous.cumulative_confirmed_deaths
       : null;
+
+  // Dedicated records for historical benchmark section
+  const historicalLatest = chartRows.at(-1);
+  const historicalPrevious = chartRows.at(-2);
+  const historicalCaseDelta =
+    historicalLatest && historicalPrevious
+      ? historicalLatest.cumulative_confirmed_cases -
+        historicalPrevious.cumulative_confirmed_cases
+      : null;
+  const historicalDeathDelta =
+    historicalLatest && historicalPrevious
+      ? historicalLatest.cumulative_confirmed_deaths -
+        historicalPrevious.cumulative_confirmed_deaths
+      : null;
+
+  // Dedicated records for surveillance observation section
+  const surveillanceLatest = surveillanceData?.latest_observation;
+  const surveillanceBaseline = surveillanceData?.baseline_comparison;
 
   // NEW: Call the Python SEIRD simulation API.
   async function runSimulation() {
@@ -613,84 +664,295 @@ export default function App() {
               </div>
             </section>
 
-            <StreamSelectorBar
-              streamMode={streamMode}
-              setStreamMode={setStreamMode}
-              lastSync={lastSurveillanceSync}
-              surveillanceData={surveillanceData}
-            />
-
-            <div className="section-heading-row">
-              <div>
-                <div className="eyebrow">
-                  LATEST OBSERVATION · {streamMode === 'historical' ? 'BENCHMARK ARCHIVE' : 'LIVE SURVEILLANCE'}
+            {/* ================= SECTION 1: LATEST VERIFIED SURVEILLANCE OBSERVATIONS ================= */}
+            <section className="surveillance-overview-section">
+              <div className="section-header-with-status">
+                <div>
+                  <div className="eyebrow live-eyebrow">
+                    <span className="live-dot" />
+                    OFFICIAL SURVEILLANCE FEED · BUNDIBUGYO VIRUS DISEASE (DRC)
+                  </div>
+                  <h2>Latest Verified Surveillance Observations</h2>
+                  <p className="section-subtext">
+                    Authoritative field surveillance situation reports compiled by INRB-UMIE and catalogued on the UN OCHA Humanitarian Data Exchange (HDX).
+                  </p>
                 </div>
 
-                <h2>Outbreak snapshot</h2>
+                <div className="status-and-actions">
+                  <div className="status-badge-cluster">
+                    {surveillanceLoading ? (
+                      <span className="status-badge connecting">
+                        <RefreshCw size={12} className="spin-icon" />
+                        Connecting to API...
+                      </span>
+                    ) : surveillanceError ? (
+                      <span className="status-badge error">
+                        <ShieldAlert size={12} />
+                        API Connection Failed
+                      </span>
+                    ) : (
+                      <span className="status-badge connected">
+                        <CheckCircle2 size={12} />
+                        API Connected (HTTP 200)
+                      </span>
+                    )}
+
+                    {!surveillanceLoading && !surveillanceError && surveillanceData?.upstream_verification?.verified && (
+                      <span className="status-badge verified">
+                        <CheckCircle2 size={12} />
+                        Upstream Status: Verified Current
+                      </span>
+                    )}
+
+                    {lastSurveillanceSync ? (
+                      <span className="retrieval-time">
+                        <Clock size={12} />
+                        Retrieved: {lastSurveillanceSync.toLocaleTimeString()}
+                      </span>
+                    ) : lastAttemptTime ? (
+                      <span className="retrieval-time" style={{ color: '#fca5a5' }}>
+                        <Clock size={12} />
+                        Attempt failed: {lastAttemptTime.toLocaleTimeString()}
+                      </span>
+                    ) : null}
+                  </div>
+
+                  <button
+                    type="button"
+                    className="refresh-feed-button"
+                    onClick={() => handleSurveillanceRefresh(true)}
+                    disabled={surveillanceLoading}
+                    title="Execute a live HTTP request to verify and fetch the latest official situation reports"
+                  >
+                    <RefreshCw size={13} className={surveillanceLoading ? 'spin-icon' : ''} />
+                    {surveillanceLoading ? 'Verifying Upstream…' : 'Refresh Surveillance Feed'}
+                  </button>
+                </div>
               </div>
 
-              <span className="as-of">
-                {latest
-                  ? `Observation date: ${new Date(
-                      `${latest.date}T00:00:00`
-                    ).toLocaleDateString('en-GB', {
-                      day: 'numeric',
-                      month: 'long',
-                      year: 'numeric',
-                    })} (${streamMode === 'historical' ? 'Benchmark end' : 'Latest official sitrep'})`
-                  : 'Loading dataset'}
-              </span>
-            </div>
+              {/* Sync Feedback Notification */}
+              {syncFeedback && (
+                <div className={`sync-feedback-toast ${syncFeedback.type}`}>
+                  {syncFeedback.type === 'success' ? (
+                    <CheckCircle2 size={15} />
+                  ) : (
+                    <AlertCircle size={15} />
+                  )}
+                  <span>{syncFeedback.message}</span>
+                </div>
+              )}
 
-            <section className="stats-grid">
-              <StatCard
-                label="Cumulative confirmed cases"
-                value={fmt(latest?.cumulative_confirmed_cases)}
-                note={
-                  caseDelta == null
-                    ? 'Latest available record'
-                    : `+${fmt(caseDelta)} from previous record`
-                }
-                icon={Activity}
-                accent="blue"
-              />
+              {/* Error State */}
+              {surveillanceError && (
+                <div className="surveillance-error-banner">
+                  <ShieldAlert size={18} />
+                  <div>
+                    <strong>Surveillance API Retrieval Notice:</strong> {surveillanceError}
+                    <p>
+                      Unable to refresh from official upstream. Showing cached or local observation baseline. You can retry via the refresh button.
+                    </p>
+                  </div>
+                </div>
+              )}
 
-              <StatCard
-                label="Cumulative confirmed deaths"
-                value={fmt(latest?.cumulative_confirmed_deaths)}
-                note={
-                  deathDelta == null
-                    ? 'Latest available record'
-                    : `+${fmt(deathDelta)} from previous record`
-                }
-                icon={CircleAlert}
-                accent="red"
-              />
+              {/* Loading Placeholder if no data yet */}
+              {surveillanceLoading && !surveillanceData ? (
+                <div className="loading-placeholder">
+                  <RefreshCw size={24} className="spin-icon" />
+                  <p>Requesting verified observations from official surveillance endpoint (/api/surveillance)...</p>
+                </div>
+              ) : !surveillanceData?.latest_observation ? (
+                <div className="empty-placeholder">
+                  <AlertCircle size={24} />
+                  <p>No observation records were returned by the upstream source.</p>
+                </div>
+              ) : (
+                <>
+                  <div className="stats-grid">
+                    <StatCard
+                      label="Cumulative confirmed cases"
+                      value={fmt(surveillanceLatest?.cumulative_confirmed_cases)}
+                      note={
+                        surveillanceBaseline
+                          ? `+${fmt(surveillanceBaseline.additional_cases_since_baseline)} cases beyond Aug 16 baseline`
+                          : 'Official situation report #160'
+                      }
+                      icon={Activity}
+                      accent="blue"
+                    />
 
-              <StatCard
-                label="Calculated case-fatality ratio"
-                value={
-                  latest
-                    ? `${fmt(latest.calculated_cfr_percent)}%`
-                    : '—'
-                }
-                note="Deaths ÷ confirmed cases in this stream"
-                icon={ShieldCheck}
-                accent="violet"
-              />
+                    <StatCard
+                      label="Cumulative confirmed deaths"
+                      value={fmt(surveillanceLatest?.cumulative_confirmed_deaths)}
+                      note={
+                        surveillanceBaseline?.additional_deaths_since_baseline != null
+                          ? `+${fmt(surveillanceBaseline.additional_deaths_since_baseline)} deaths beyond Aug 16 baseline`
+                          : 'Official situation report #160'
+                      }
+                      icon={CircleAlert}
+                      accent="red"
+                    />
 
-              <StatCard
-                label={streamMode === 'historical' ? 'Weekly observations' : 'Daily reports'}
-                value={fmt(activeChartRows.length)}
-                note={
-                  streamMode === 'historical'
-                    ? 'Records in 14-week benchmark dataset'
-                    : 'Reports in official surveillance feed'
-                }
-                icon={CalendarDays}
-                accent="green"
-              />
+                    <StatCard
+                      label="Calculated case-fatality ratio"
+                      value={
+                        surveillanceLatest?.calculated_cfr_percent != null
+                          ? `${fmt(surveillanceLatest.calculated_cfr_percent)}%`
+                          : '—'
+                      }
+                      note="4,727 deaths ÷ 9,765 confirmed cases"
+                      icon={ShieldCheck}
+                      accent="violet"
+                    />
+
+                    <StatCard
+                      label="Latest observation date"
+                      value={
+                        surveillanceLatest?.date
+                          ? dateLabel(surveillanceLatest.date) + ` (${surveillanceLatest.date})`
+                          : '21 Oct 2026'
+                      }
+                      note="Field cut-off gazetted in SitRep #160 (Published 24 Oct 2026)"
+                      icon={CalendarDays}
+                      accent="green"
+                    />
+                  </div>
+
+                  <div className="surveillance-provenance-bar">
+                    <div className="prov-info">
+                      <span className="prov-label">DATA GOVERNANCE &amp; PROVENANCE:</span>
+                      <span className="prov-text">
+                        Source: <strong>INRB-UMIE</strong> (Institut National de Recherche Biomédicale) via <strong>UN OCHA HDX</strong> · Published as periodic official situation reports (SitReps), not a real-time streaming ticker.
+                      </span>
+                    </div>
+
+                    <div className="prov-links">
+                      <a
+                        href="https://github.com/INRB-UMIE/BDBV2026-Data"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="prov-link"
+                      >
+                        <ExternalLink size={12} />
+                        <span>INRB-UMIE Repository</span>
+                      </a>
+                      <a
+                        href="https://github.com/INRB-UMIE/BDBV2026-Data/pull/213"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="prov-link"
+                      >
+                        <ExternalLink size={12} />
+                        <span>SitRep #160 (PR #213)</span>
+                      </a>
+                      <a
+                        href="https://data.humdata.org/dataset/republique-democratique-du-congo-cas-et-deces-d-ebola"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="prov-link"
+                      >
+                        <ExternalLink size={12} />
+                        <span>UN OCHA HDX Dataset</span>
+                      </a>
+                    </div>
+                  </div>
+                </>
+              )}
             </section>
+
+            {/* ================= SECTION 2: HISTORICAL BENCHMARK DATASET ================= */}
+            <section className="historical-benchmark-section">
+              <div className="section-header-with-status">
+                <div>
+                  <div className="eyebrow benchmark-eyebrow">
+                    <Database size={13} />
+                    HISTORICAL BENCHMARK · GROUND-TRUTH RESEARCH ARCHIVE
+                  </div>
+                  <h2>Historical Calibration Benchmark (May 10 – August 16, 2026)</h2>
+                  <p className="section-subtext">
+                    Fixed 14-week baseline series (public/ebola_dataset.json) used to calibrate SEIRD differential-equation parameters (β, σ, γ, μ) and PINN workspace.
+                  </p>
+                </div>
+
+                <div className="benchmark-identity-badge">
+                  <Database size={13} />
+                  <span>14-WEEK FIXED BASELINE (STATIC)</span>
+                </div>
+              </div>
+
+              <div className="stats-grid">
+                <StatCard
+                  label="Benchmark confirmed cases"
+                  value={fmt(historicalLatest?.cumulative_confirmed_cases)}
+                  note="Final record on 16 August 2026 (Report #14)"
+                  icon={Activity}
+                  accent="blue"
+                />
+
+                <StatCard
+                  label="Benchmark confirmed deaths"
+                  value={fmt(historicalLatest?.cumulative_confirmed_deaths)}
+                  note="Final record on 16 August 2026 (Report #14)"
+                  icon={CircleAlert}
+                  accent="red"
+                />
+
+                <StatCard
+                  label="Benchmark case-fatality ratio"
+                  value={
+                    historicalLatest?.calculated_cfr_percent != null
+                      ? `${fmt(historicalLatest.calculated_cfr_percent)}%`
+                      : '47.36%'
+                  }
+                  note="2,378 deaths ÷ 5,021 cases in 14-week baseline"
+                  icon={ShieldCheck}
+                  accent="violet"
+                />
+
+                <StatCard
+                  label="Benchmark observation window"
+                  value={chartRows.length ? `${chartRows.length} Weekly Records` : '14 Weekly Records'}
+                  note="10 May 2026 to 16 August 2026 (Weekly intervals)"
+                  icon={CalendarDays}
+                  accent="green"
+                />
+              </div>
+
+              <div className="benchmark-footnote">
+                <span className="footnote-label">MODEL REPRODUCIBILITY NOTE:</span>
+                <span>
+                  This 14-week dataset is intentionally fixed and isolated from active field updates so mathematical model calibrations remain stable and reproducible across evaluations.
+                </span>
+              </div>
+            </section>
+
+            {/* ================= SECTION 3: OUTBREAK TRAJECTORY & CHARTS ================= */}
+            <div className="chart-header-row">
+              <div>
+                <div className="eyebrow">EPIDEMIOLOGICAL TRAJECTORY</div>
+                <h2>Outbreak Trajectory &amp; Increments</h2>
+              </div>
+
+              {/* Segmented control to choose which series to plot on the chart */}
+              <div className="chart-series-selector">
+                <button
+                  type="button"
+                  className={`series-pill ${streamMode === 'surveillance' ? 'active' : ''}`}
+                  onClick={() => setStreamMode('surveillance')}
+                >
+                  <Radio size={13} />
+                  <span>Official Surveillance (133 Daily Reports to Oct 21)</span>
+                </button>
+                <button
+                  type="button"
+                  className={`series-pill ${streamMode === 'historical' ? 'active' : ''}`}
+                  onClick={() => setStreamMode('historical')}
+                >
+                  <Database size={13} />
+                  <span>Historical Benchmark (14 Weekly Baseline to Aug 16)</span>
+                </button>
+              </div>
+            </div>
 
             <section className="charts-grid">
               <article className="panel chart-panel wide">

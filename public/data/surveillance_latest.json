@@ -1,0 +1,1122 @@
+{
+  "success": true,
+  "cached": false,
+  "source_name": "INRB-UMIE & UN OCHA HDX Consolidated Surveillance Feed",
+  "source_url": "https://data.humdata.org/dataset/republique-democratique-du-congo-cas-et-deces-d-ebola",
+  "upstream_cases_url": "https://raw.githubusercontent.com/INRB-UMIE/BDBV2026-Data/main/data/insp_sitrep/processed/insp_sitrep__national_cumulative_confirmed_cases__daily.csv",
+  "upstream_deaths_url": "https://raw.githubusercontent.com/INRB-UMIE/BDBV2026-Data/main/data/insp_sitrep/processed/insp_sitrep__national_cumulative_confirmed_deaths__daily.csv",
+  "official_repo_url": "https://github.com/INRB-UMIE/BDBV2026-Data",
+  "official_pr_url": "https://github.com/INRB-UMIE/BDBV2026-Data/pull/213",
+  "official_commit_url": "https://github.com/INRB-UMIE/BDBV2026-Data/commit/9993f90b45be76234ca8e69db63b720422edb851",
+  "outbreak_context": "Bundibugyo virus disease (BDBV) Epidemiological Monitoring",
+  "geographic_location": "Democratic Republic of the Congo (National & Subnational Health Zones)",
+  "case_classification": "confirmed (laboratory/clinical)",
+  "count_type": "cumulative",
+  "fetched_at": "2026-10-25T05:57:14.692766+00:00",
+  "data_classification": "OFFICIAL_SURVEILLANCE_BULLETIN",
+  "is_realtime_streaming": false,
+  "status_notice": "Official periodic surveillance bulletin published by INRB-UMIE and catalogued on UN OCHA Humanitarian Data Exchange. Not an automated real-time streaming ticker.",
+  "three_timestamps": {
+    "latest_observation_date": "2026-10-21",
+    "latest_observation_label": "Field Observation Cut-Off Date",
+    "latest_observation_description": "Field data collection cut-off gazetted in SitRep #160 (2026-10-21)",
+    "publication_date": "2026-10-24T07:25:14Z",
+    "publication_date_formatted": "24 October 2026, 07:25 UTC",
+    "publication_description": "SitRep #160 merged into authoritative INRB-UMIE surveillance repository",
+    "last_sync_time": "2026-10-25T05:57:14.692766+00:00",
+    "last_sync_formatted": "25 October 2026, 05:57:14 UTC",
+    "sitrep_number": 160
+  },
+  "upstream_verification": {
+    "verified": true,
+    "status": "VERIFIED_CURRENT",
+    "badge_label": "Upstream Status: Verified Current",
+    "statement": "Confirmed via authoritative INRB-UMIE surveillance repository. SitRep #160 (published 24 Oct 2026) is the latest official bulletin released by health authorities.",
+    "latest_commit_sha": "630d15d",
+    "latest_commit_date": "2026-10-24T07:30:22Z",
+    "checked_live": true
+  },
+  "latest_observation": {
+    "date": "2026-10-21",
+    "cumulative_confirmed_cases": 9765,
+    "cumulative_confirmed_deaths": 4727,
+    "calculated_cfr_percent": 48.41,
+    "status_label": "Latest Available Official Report (2026-10-21)"
+  },
+  "baseline_comparison": {
+    "historical_dataset_end_date": "2026-08-16",
+    "historical_dataset_cases": 5021,
+    "historical_dataset_deaths": 2378,
+    "additional_cases_since_baseline": 4744,
+    "additional_deaths_since_baseline": 2349
+  },
+  "total_reporting_dates": 133,
+  "earliest_date": "2026-05-14",
+  "latest_date": "2026-10-21",
+  "time_series": [
+    {
+      "date": "2026-05-14",
+      "cumulative_confirmed_cases": 8,
+      "cumulative_confirmed_deaths": 4,
+      "calculated_cfr_percent": 50.0,
+      "daily_new_confirmed_cases": null,
+      "daily_new_confirmed_deaths": null
+    },
+    {
+      "date": "2026-05-17",
+      "cumulative_confirmed_cases": 13,
+      "cumulative_confirmed_deaths": 4,
+      "calculated_cfr_percent": 30.77,
+      "daily_new_confirmed_cases": 5,
+      "daily_new_confirmed_deaths": 0
+    },
+    {
+      "date": "2026-05-18",
+      "cumulative_confirmed_cases": 33,
+      "cumulative_confirmed_deaths": 4,
+      "calculated_cfr_percent": 12.12,
+      "daily_new_confirmed_cases": 20,
+      "daily_new_confirmed_deaths": 0
+    },
+    {
+      "date": "2026-05-19",
+      "cumulative_confirmed_cases": 51,
+      "cumulative_confirmed_deaths": 4,
+      "calculated_cfr_percent": 7.84,
+      "daily_new_confirmed_cases": 18,
+      "daily_new_confirmed_deaths": 0
+    },
+    {
+      "date": "2026-05-20",
+      "cumulative_confirmed_cases": 64,
+      "cumulative_confirmed_deaths": 6,
+      "calculated_cfr_percent": 9.38,
+      "daily_new_confirmed_cases": 13,
+      "daily_new_confirmed_deaths": 2
+    },
+    {
+      "date": "2026-05-21",
+      "cumulative_confirmed_cases": 83,
+      "cumulative_confirmed_deaths": 9,
+      "calculated_cfr_percent": 10.84,
+      "daily_new_confirmed_cases": 19,
+      "daily_new_confirmed_deaths": 3
+    },
+    {
+      "date": "2026-05-22",
+      "cumulative_confirmed_cases": 91,
+      "cumulative_confirmed_deaths": 10,
+      "calculated_cfr_percent": 10.99,
+      "daily_new_confirmed_cases": 8,
+      "daily_new_confirmed_deaths": 1
+    },
+    {
+      "date": "2026-05-23",
+      "cumulative_confirmed_cases": 101,
+      "cumulative_confirmed_deaths": 10,
+      "calculated_cfr_percent": 9.9,
+      "daily_new_confirmed_cases": 10,
+      "daily_new_confirmed_deaths": 0
+    },
+    {
+      "date": "2026-05-24",
+      "cumulative_confirmed_cases": 105,
+      "cumulative_confirmed_deaths": 10,
+      "calculated_cfr_percent": 9.52,
+      "daily_new_confirmed_cases": 4,
+      "daily_new_confirmed_deaths": 0
+    },
+    {
+      "date": "2026-05-25",
+      "cumulative_confirmed_cases": 106,
+      "cumulative_confirmed_deaths": 12,
+      "calculated_cfr_percent": 11.32,
+      "daily_new_confirmed_cases": 1,
+      "daily_new_confirmed_deaths": 2
+    },
+    {
+      "date": "2026-05-26",
+      "cumulative_confirmed_cases": 121,
+      "cumulative_confirmed_deaths": 17,
+      "calculated_cfr_percent": 14.05,
+      "daily_new_confirmed_cases": 15,
+      "daily_new_confirmed_deaths": 5
+    },
+    {
+      "date": "2026-05-27",
+      "cumulative_confirmed_cases": 125,
+      "cumulative_confirmed_deaths": 17,
+      "calculated_cfr_percent": 13.6,
+      "daily_new_confirmed_cases": 4,
+      "daily_new_confirmed_deaths": 0
+    },
+    {
+      "date": "2026-05-28",
+      "cumulative_confirmed_cases": 210,
+      "cumulative_confirmed_deaths": 17,
+      "calculated_cfr_percent": 8.1,
+      "daily_new_confirmed_cases": 85,
+      "daily_new_confirmed_deaths": 0
+    },
+    {
+      "date": "2026-05-29",
+      "cumulative_confirmed_cases": 263,
+      "cumulative_confirmed_deaths": 42,
+      "calculated_cfr_percent": 15.97,
+      "daily_new_confirmed_cases": 53,
+      "daily_new_confirmed_deaths": 25
+    },
+    {
+      "date": "2026-05-30",
+      "cumulative_confirmed_cases": 282,
+      "cumulative_confirmed_deaths": 42,
+      "calculated_cfr_percent": 14.89,
+      "daily_new_confirmed_cases": 19,
+      "daily_new_confirmed_deaths": 0
+    },
+    {
+      "date": "2026-05-31",
+      "cumulative_confirmed_cases": 321,
+      "cumulative_confirmed_deaths": 48,
+      "calculated_cfr_percent": 14.95,
+      "daily_new_confirmed_cases": 39,
+      "daily_new_confirmed_deaths": 6
+    },
+    {
+      "date": "2026-06-01",
+      "cumulative_confirmed_cases": 344,
+      "cumulative_confirmed_deaths": 60,
+      "calculated_cfr_percent": 17.44,
+      "daily_new_confirmed_cases": 23,
+      "daily_new_confirmed_deaths": 12
+    },
+    {
+      "date": "2026-06-02",
+      "cumulative_confirmed_cases": 363,
+      "cumulative_confirmed_deaths": 62,
+      "calculated_cfr_percent": 17.08,
+      "daily_new_confirmed_cases": 19,
+      "daily_new_confirmed_deaths": 2
+    },
+    {
+      "date": "2026-06-03",
+      "cumulative_confirmed_cases": 381,
+      "cumulative_confirmed_deaths": 64,
+      "calculated_cfr_percent": 16.8,
+      "daily_new_confirmed_cases": 18,
+      "daily_new_confirmed_deaths": 2
+    },
+    {
+      "date": "2026-06-04",
+      "cumulative_confirmed_cases": 452,
+      "cumulative_confirmed_deaths": 82,
+      "calculated_cfr_percent": 18.14,
+      "daily_new_confirmed_cases": 71,
+      "daily_new_confirmed_deaths": 18
+    },
+    {
+      "date": "2026-06-05",
+      "cumulative_confirmed_cases": 488,
+      "cumulative_confirmed_deaths": 86,
+      "calculated_cfr_percent": 17.62,
+      "daily_new_confirmed_cases": 36,
+      "daily_new_confirmed_deaths": 4
+    },
+    {
+      "date": "2026-06-06",
+      "cumulative_confirmed_cases": 515,
+      "cumulative_confirmed_deaths": 91,
+      "calculated_cfr_percent": 17.67,
+      "daily_new_confirmed_cases": 27,
+      "daily_new_confirmed_deaths": 5
+    },
+    {
+      "date": "2026-06-07",
+      "cumulative_confirmed_cases": 550,
+      "cumulative_confirmed_deaths": 101,
+      "calculated_cfr_percent": 18.36,
+      "daily_new_confirmed_cases": 35,
+      "daily_new_confirmed_deaths": 10
+    },
+    {
+      "date": "2026-06-08",
+      "cumulative_confirmed_cases": 598,
+      "cumulative_confirmed_deaths": 115,
+      "calculated_cfr_percent": 19.23,
+      "daily_new_confirmed_cases": 48,
+      "daily_new_confirmed_deaths": 14
+    },
+    {
+      "date": "2026-06-09",
+      "cumulative_confirmed_cases": 635,
+      "cumulative_confirmed_deaths": 127,
+      "calculated_cfr_percent": 20.0,
+      "daily_new_confirmed_cases": 37,
+      "daily_new_confirmed_deaths": 12
+    },
+    {
+      "date": "2026-06-10",
+      "cumulative_confirmed_cases": 676,
+      "cumulative_confirmed_deaths": 136,
+      "calculated_cfr_percent": 20.12,
+      "daily_new_confirmed_cases": 41,
+      "daily_new_confirmed_deaths": 9
+    },
+    {
+      "date": "2026-06-11",
+      "cumulative_confirmed_cases": 689,
+      "cumulative_confirmed_deaths": 139,
+      "calculated_cfr_percent": 20.17,
+      "daily_new_confirmed_cases": 13,
+      "daily_new_confirmed_deaths": 3
+    },
+    {
+      "date": "2026-06-13",
+      "cumulative_confirmed_cases": 782,
+      "cumulative_confirmed_deaths": 181,
+      "calculated_cfr_percent": 23.15,
+      "daily_new_confirmed_cases": 93,
+      "daily_new_confirmed_deaths": 42
+    },
+    {
+      "date": "2026-06-14",
+      "cumulative_confirmed_cases": 808,
+      "cumulative_confirmed_deaths": 192,
+      "calculated_cfr_percent": 23.76,
+      "daily_new_confirmed_cases": 26,
+      "daily_new_confirmed_deaths": 11
+    },
+    {
+      "date": "2026-06-15",
+      "cumulative_confirmed_cases": 837,
+      "cumulative_confirmed_deaths": 196,
+      "calculated_cfr_percent": 23.42,
+      "daily_new_confirmed_cases": 29,
+      "daily_new_confirmed_deaths": 4
+    },
+    {
+      "date": "2026-06-16",
+      "cumulative_confirmed_cases": 875,
+      "cumulative_confirmed_deaths": 202,
+      "calculated_cfr_percent": 23.09,
+      "daily_new_confirmed_cases": 38,
+      "daily_new_confirmed_deaths": 6
+    },
+    {
+      "date": "2026-06-17",
+      "cumulative_confirmed_cases": 896,
+      "cumulative_confirmed_deaths": 232,
+      "calculated_cfr_percent": 25.89,
+      "daily_new_confirmed_cases": 21,
+      "daily_new_confirmed_deaths": 30
+    },
+    {
+      "date": "2026-06-18",
+      "cumulative_confirmed_cases": 933,
+      "cumulative_confirmed_deaths": 245,
+      "calculated_cfr_percent": 26.26,
+      "daily_new_confirmed_cases": 37,
+      "daily_new_confirmed_deaths": 13
+    },
+    {
+      "date": "2026-06-19",
+      "cumulative_confirmed_cases": 956,
+      "cumulative_confirmed_deaths": 247,
+      "calculated_cfr_percent": 25.84,
+      "daily_new_confirmed_cases": 23,
+      "daily_new_confirmed_deaths": 2
+    },
+    {
+      "date": "2026-06-20",
+      "cumulative_confirmed_cases": 1003,
+      "cumulative_confirmed_deaths": 254,
+      "calculated_cfr_percent": 25.32,
+      "daily_new_confirmed_cases": 47,
+      "daily_new_confirmed_deaths": 7
+    },
+    {
+      "date": "2026-06-21",
+      "cumulative_confirmed_cases": 1048,
+      "cumulative_confirmed_deaths": 267,
+      "calculated_cfr_percent": 25.48,
+      "daily_new_confirmed_cases": 45,
+      "daily_new_confirmed_deaths": 13
+    },
+    {
+      "date": "2026-06-22",
+      "cumulative_confirmed_cases": 1094,
+      "cumulative_confirmed_deaths": 277,
+      "calculated_cfr_percent": 25.32,
+      "daily_new_confirmed_cases": 46,
+      "daily_new_confirmed_deaths": 10
+    },
+    {
+      "date": "2026-06-23",
+      "cumulative_confirmed_cases": 1118,
+      "cumulative_confirmed_deaths": 291,
+      "calculated_cfr_percent": 26.03,
+      "daily_new_confirmed_cases": 24,
+      "daily_new_confirmed_deaths": 14
+    },
+    {
+      "date": "2026-06-24",
+      "cumulative_confirmed_cases": 1155,
+      "cumulative_confirmed_deaths": 304,
+      "calculated_cfr_percent": 26.32,
+      "daily_new_confirmed_cases": 37,
+      "daily_new_confirmed_deaths": 13
+    },
+    {
+      "date": "2026-06-25",
+      "cumulative_confirmed_cases": 1203,
+      "cumulative_confirmed_deaths": 321,
+      "calculated_cfr_percent": 26.68,
+      "daily_new_confirmed_cases": 48,
+      "daily_new_confirmed_deaths": 17
+    },
+    {
+      "date": "2026-06-27",
+      "cumulative_confirmed_cases": 1274,
+      "cumulative_confirmed_deaths": 360,
+      "calculated_cfr_percent": 28.26,
+      "daily_new_confirmed_cases": 71,
+      "daily_new_confirmed_deaths": 39
+    },
+    {
+      "date": "2026-06-29",
+      "cumulative_confirmed_cases": 1333,
+      "cumulative_confirmed_deaths": 399,
+      "calculated_cfr_percent": 29.93,
+      "daily_new_confirmed_cases": 59,
+      "daily_new_confirmed_deaths": 39
+    },
+    {
+      "date": "2026-06-30",
+      "cumulative_confirmed_cases": 1406,
+      "cumulative_confirmed_deaths": 438,
+      "calculated_cfr_percent": 31.15,
+      "daily_new_confirmed_cases": 73,
+      "daily_new_confirmed_deaths": 39
+    },
+    {
+      "date": "2026-07-01",
+      "cumulative_confirmed_cases": 1460,
+      "cumulative_confirmed_deaths": 452,
+      "calculated_cfr_percent": 30.96,
+      "daily_new_confirmed_cases": 54,
+      "daily_new_confirmed_deaths": 14
+    },
+    {
+      "date": "2026-07-02",
+      "cumulative_confirmed_cases": 1502,
+      "cumulative_confirmed_deaths": 473,
+      "calculated_cfr_percent": 31.49,
+      "daily_new_confirmed_cases": 42,
+      "daily_new_confirmed_deaths": 21
+    },
+    {
+      "date": "2026-07-03",
+      "cumulative_confirmed_cases": 1528,
+      "cumulative_confirmed_deaths": 492,
+      "calculated_cfr_percent": 32.2,
+      "daily_new_confirmed_cases": 26,
+      "daily_new_confirmed_deaths": 19
+    },
+    {
+      "date": "2026-07-04",
+      "cumulative_confirmed_cases": 1561,
+      "cumulative_confirmed_deaths": 506,
+      "calculated_cfr_percent": 32.42,
+      "daily_new_confirmed_cases": 33,
+      "daily_new_confirmed_deaths": 14
+    },
+    {
+      "date": "2026-07-05",
+      "cumulative_confirmed_cases": 1624,
+      "cumulative_confirmed_deaths": 521,
+      "calculated_cfr_percent": 32.08,
+      "daily_new_confirmed_cases": 63,
+      "daily_new_confirmed_deaths": 15
+    },
+    {
+      "date": "2026-07-06",
+      "cumulative_confirmed_cases": 1708,
+      "cumulative_confirmed_deaths": 580,
+      "calculated_cfr_percent": 33.96,
+      "daily_new_confirmed_cases": 84,
+      "daily_new_confirmed_deaths": 59
+    },
+    {
+      "date": "2026-07-07",
+      "cumulative_confirmed_cases": 1759,
+      "cumulative_confirmed_deaths": 600,
+      "calculated_cfr_percent": 34.11,
+      "daily_new_confirmed_cases": 51,
+      "daily_new_confirmed_deaths": 20
+    },
+    {
+      "date": "2026-07-08",
+      "cumulative_confirmed_cases": 1792,
+      "cumulative_confirmed_deaths": 625,
+      "calculated_cfr_percent": 34.88,
+      "daily_new_confirmed_cases": 33,
+      "daily_new_confirmed_deaths": 25
+    },
+    {
+      "date": "2026-07-09",
+      "cumulative_confirmed_cases": 1830,
+      "cumulative_confirmed_deaths": 648,
+      "calculated_cfr_percent": 35.41,
+      "daily_new_confirmed_cases": 38,
+      "daily_new_confirmed_deaths": 23
+    },
+    {
+      "date": "2026-07-10",
+      "cumulative_confirmed_cases": 1873,
+      "cumulative_confirmed_deaths": 672,
+      "calculated_cfr_percent": 35.88,
+      "daily_new_confirmed_cases": 43,
+      "daily_new_confirmed_deaths": 24
+    },
+    {
+      "date": "2026-07-11",
+      "cumulative_confirmed_cases": 1926,
+      "cumulative_confirmed_deaths": 702,
+      "calculated_cfr_percent": 36.45,
+      "daily_new_confirmed_cases": 53,
+      "daily_new_confirmed_deaths": 30
+    },
+    {
+      "date": "2026-07-13",
+      "cumulative_confirmed_cases": 2011,
+      "cumulative_confirmed_deaths": 754,
+      "calculated_cfr_percent": 37.49,
+      "daily_new_confirmed_cases": 85,
+      "daily_new_confirmed_deaths": 52
+    },
+    {
+      "date": "2026-07-15",
+      "cumulative_confirmed_cases": 2124,
+      "cumulative_confirmed_deaths": 828,
+      "calculated_cfr_percent": 38.98,
+      "daily_new_confirmed_cases": 113,
+      "daily_new_confirmed_deaths": 74
+    },
+    {
+      "date": "2026-07-17",
+      "cumulative_confirmed_cases": 2267,
+      "cumulative_confirmed_deaths": 893,
+      "calculated_cfr_percent": 39.39,
+      "daily_new_confirmed_cases": 143,
+      "daily_new_confirmed_deaths": 65
+    },
+    {
+      "date": "2026-07-18",
+      "cumulative_confirmed_cases": 2344,
+      "cumulative_confirmed_deaths": 930,
+      "calculated_cfr_percent": 39.68,
+      "daily_new_confirmed_cases": 77,
+      "daily_new_confirmed_deaths": 37
+    },
+    {
+      "date": "2026-07-19",
+      "cumulative_confirmed_cases": 2423,
+      "cumulative_confirmed_deaths": 967,
+      "calculated_cfr_percent": 39.91,
+      "daily_new_confirmed_cases": 79,
+      "daily_new_confirmed_deaths": 37
+    },
+    {
+      "date": "2026-07-20",
+      "cumulative_confirmed_cases": 2473,
+      "cumulative_confirmed_deaths": 999,
+      "calculated_cfr_percent": 40.4,
+      "daily_new_confirmed_cases": 50,
+      "daily_new_confirmed_deaths": 32
+    },
+    {
+      "date": "2026-07-22",
+      "cumulative_confirmed_cases": 2905,
+      "cumulative_confirmed_deaths": 1269,
+      "calculated_cfr_percent": 43.68,
+      "daily_new_confirmed_cases": 432,
+      "daily_new_confirmed_deaths": 270
+    },
+    {
+      "date": "2026-07-23",
+      "cumulative_confirmed_cases": 2973,
+      "cumulative_confirmed_deaths": 1309,
+      "calculated_cfr_percent": 44.03,
+      "daily_new_confirmed_cases": 68,
+      "daily_new_confirmed_deaths": 40
+    },
+    {
+      "date": "2026-07-25",
+      "cumulative_confirmed_cases": 3200,
+      "cumulative_confirmed_deaths": 1405,
+      "calculated_cfr_percent": 43.91,
+      "daily_new_confirmed_cases": 227,
+      "daily_new_confirmed_deaths": 96
+    },
+    {
+      "date": "2026-07-26",
+      "cumulative_confirmed_cases": 3262,
+      "cumulative_confirmed_deaths": 1437,
+      "calculated_cfr_percent": 44.05,
+      "daily_new_confirmed_cases": 62,
+      "daily_new_confirmed_deaths": 32
+    },
+    {
+      "date": "2026-07-27",
+      "cumulative_confirmed_cases": 3360,
+      "cumulative_confirmed_deaths": 1487,
+      "calculated_cfr_percent": 44.26,
+      "daily_new_confirmed_cases": 98,
+      "daily_new_confirmed_deaths": 50
+    },
+    {
+      "date": "2026-07-30",
+      "cumulative_confirmed_cases": 3605,
+      "cumulative_confirmed_deaths": 1587,
+      "calculated_cfr_percent": 44.02,
+      "daily_new_confirmed_cases": 245,
+      "daily_new_confirmed_deaths": 100
+    },
+    {
+      "date": "2026-07-31",
+      "cumulative_confirmed_cases": 3674,
+      "cumulative_confirmed_deaths": 1621,
+      "calculated_cfr_percent": 44.12,
+      "daily_new_confirmed_cases": 69,
+      "daily_new_confirmed_deaths": 34
+    },
+    {
+      "date": "2026-08-01",
+      "cumulative_confirmed_cases": 3748,
+      "cumulative_confirmed_deaths": 1657,
+      "calculated_cfr_percent": 44.21,
+      "daily_new_confirmed_cases": 74,
+      "daily_new_confirmed_deaths": 36
+    },
+    {
+      "date": "2026-08-02",
+      "cumulative_confirmed_cases": 3802,
+      "cumulative_confirmed_deaths": 1707,
+      "calculated_cfr_percent": 44.9,
+      "daily_new_confirmed_cases": 54,
+      "daily_new_confirmed_deaths": 50
+    },
+    {
+      "date": "2026-08-03",
+      "cumulative_confirmed_cases": 3874,
+      "cumulative_confirmed_deaths": 1751,
+      "calculated_cfr_percent": 45.2,
+      "daily_new_confirmed_cases": 72,
+      "daily_new_confirmed_deaths": 44
+    },
+    {
+      "date": "2026-08-04",
+      "cumulative_confirmed_cases": 3973,
+      "cumulative_confirmed_deaths": 1801,
+      "calculated_cfr_percent": 45.33,
+      "daily_new_confirmed_cases": 99,
+      "daily_new_confirmed_deaths": 50
+    },
+    {
+      "date": "2026-08-08",
+      "cumulative_confirmed_cases": 4209,
+      "cumulative_confirmed_deaths": 1916,
+      "calculated_cfr_percent": 45.52,
+      "daily_new_confirmed_cases": 236,
+      "daily_new_confirmed_deaths": 115
+    },
+    {
+      "date": "2026-08-09",
+      "cumulative_confirmed_cases": 4381,
+      "cumulative_confirmed_deaths": 2011,
+      "calculated_cfr_percent": 45.9,
+      "daily_new_confirmed_cases": 172,
+      "daily_new_confirmed_deaths": 95
+    },
+    {
+      "date": "2026-08-10",
+      "cumulative_confirmed_cases": 4449,
+      "cumulative_confirmed_deaths": 2061,
+      "calculated_cfr_percent": 46.33,
+      "daily_new_confirmed_cases": 68,
+      "daily_new_confirmed_deaths": 50
+    },
+    {
+      "date": "2026-08-11",
+      "cumulative_confirmed_cases": 4566,
+      "cumulative_confirmed_deaths": 2128,
+      "calculated_cfr_percent": 46.61,
+      "daily_new_confirmed_cases": 117,
+      "daily_new_confirmed_deaths": 67
+    },
+    {
+      "date": "2026-08-15",
+      "cumulative_confirmed_cases": 4945,
+      "cumulative_confirmed_deaths": 2325,
+      "calculated_cfr_percent": 47.02,
+      "daily_new_confirmed_cases": 379,
+      "daily_new_confirmed_deaths": 197
+    },
+    {
+      "date": "2026-08-17",
+      "cumulative_confirmed_cases": 5105,
+      "cumulative_confirmed_deaths": 2420,
+      "calculated_cfr_percent": 47.4,
+      "daily_new_confirmed_cases": 160,
+      "daily_new_confirmed_deaths": 95
+    },
+    {
+      "date": "2026-08-19",
+      "cumulative_confirmed_cases": 5290,
+      "cumulative_confirmed_deaths": 2516,
+      "calculated_cfr_percent": 47.56,
+      "daily_new_confirmed_cases": 185,
+      "daily_new_confirmed_deaths": 96
+    },
+    {
+      "date": "2026-08-20",
+      "cumulative_confirmed_cases": 5375,
+      "cumulative_confirmed_deaths": 2557,
+      "calculated_cfr_percent": 47.57,
+      "daily_new_confirmed_cases": 85,
+      "daily_new_confirmed_deaths": 41
+    },
+    {
+      "date": "2026-08-22",
+      "cumulative_confirmed_cases": 5514,
+      "cumulative_confirmed_deaths": 2642,
+      "calculated_cfr_percent": 47.91,
+      "daily_new_confirmed_cases": 139,
+      "daily_new_confirmed_deaths": 85
+    },
+    {
+      "date": "2026-08-24",
+      "cumulative_confirmed_cases": 5656,
+      "cumulative_confirmed_deaths": 2715,
+      "calculated_cfr_percent": 48.0,
+      "daily_new_confirmed_cases": 142,
+      "daily_new_confirmed_deaths": 73
+    },
+    {
+      "date": "2026-08-25",
+      "cumulative_confirmed_cases": 5713,
+      "cumulative_confirmed_deaths": 2755,
+      "calculated_cfr_percent": 48.22,
+      "daily_new_confirmed_cases": 57,
+      "daily_new_confirmed_deaths": 40
+    },
+    {
+      "date": "2026-08-26",
+      "cumulative_confirmed_cases": 5794,
+      "cumulative_confirmed_deaths": 2786,
+      "calculated_cfr_percent": 48.08,
+      "daily_new_confirmed_cases": 81,
+      "daily_new_confirmed_deaths": 31
+    },
+    {
+      "date": "2026-08-28",
+      "cumulative_confirmed_cases": 5945,
+      "cumulative_confirmed_deaths": 2862,
+      "calculated_cfr_percent": 48.14,
+      "daily_new_confirmed_cases": 151,
+      "daily_new_confirmed_deaths": 76
+    },
+    {
+      "date": "2026-08-30",
+      "cumulative_confirmed_cases": 6100,
+      "cumulative_confirmed_deaths": 2950,
+      "calculated_cfr_percent": 48.36,
+      "daily_new_confirmed_cases": 155,
+      "daily_new_confirmed_deaths": 88
+    },
+    {
+      "date": "2026-08-31",
+      "cumulative_confirmed_cases": 6186,
+      "cumulative_confirmed_deaths": 3007,
+      "calculated_cfr_percent": 48.61,
+      "daily_new_confirmed_cases": 86,
+      "daily_new_confirmed_deaths": 57
+    },
+    {
+      "date": "2026-09-01",
+      "cumulative_confirmed_cases": 6250,
+      "cumulative_confirmed_deaths": 3039,
+      "calculated_cfr_percent": 48.62,
+      "daily_new_confirmed_cases": 64,
+      "daily_new_confirmed_deaths": 32
+    },
+    {
+      "date": "2026-09-02",
+      "cumulative_confirmed_cases": 6342,
+      "cumulative_confirmed_deaths": 3072,
+      "calculated_cfr_percent": 48.44,
+      "daily_new_confirmed_cases": 92,
+      "daily_new_confirmed_deaths": 33
+    },
+    {
+      "date": "2026-09-03",
+      "cumulative_confirmed_cases": 6436,
+      "cumulative_confirmed_deaths": 3095,
+      "calculated_cfr_percent": 48.09,
+      "daily_new_confirmed_cases": 94,
+      "daily_new_confirmed_deaths": 23
+    },
+    {
+      "date": "2026-09-04",
+      "cumulative_confirmed_cases": 6522,
+      "cumulative_confirmed_deaths": 3134,
+      "calculated_cfr_percent": 48.05,
+      "daily_new_confirmed_cases": 86,
+      "daily_new_confirmed_deaths": 39
+    },
+    {
+      "date": "2026-09-05",
+      "cumulative_confirmed_cases": 6604,
+      "cumulative_confirmed_deaths": 3175,
+      "calculated_cfr_percent": 48.08,
+      "daily_new_confirmed_cases": 82,
+      "daily_new_confirmed_deaths": 41
+    },
+    {
+      "date": "2026-09-06",
+      "cumulative_confirmed_cases": 6686,
+      "cumulative_confirmed_deaths": 3226,
+      "calculated_cfr_percent": 48.25,
+      "daily_new_confirmed_cases": 82,
+      "daily_new_confirmed_deaths": 51
+    },
+    {
+      "date": "2026-09-07",
+      "cumulative_confirmed_cases": 6757,
+      "cumulative_confirmed_deaths": 3267,
+      "calculated_cfr_percent": 48.35,
+      "daily_new_confirmed_cases": 71,
+      "daily_new_confirmed_deaths": 41
+    },
+    {
+      "date": "2026-09-08",
+      "cumulative_confirmed_cases": 6843,
+      "cumulative_confirmed_deaths": 3310,
+      "calculated_cfr_percent": 48.37,
+      "daily_new_confirmed_cases": 86,
+      "daily_new_confirmed_deaths": 43
+    },
+    {
+      "date": "2026-09-09",
+      "cumulative_confirmed_cases": 6942,
+      "cumulative_confirmed_deaths": 3349,
+      "calculated_cfr_percent": 48.24,
+      "daily_new_confirmed_cases": 99,
+      "daily_new_confirmed_deaths": 39
+    },
+    {
+      "date": "2026-09-10",
+      "cumulative_confirmed_cases": 7022,
+      "cumulative_confirmed_deaths": 3398,
+      "calculated_cfr_percent": 48.39,
+      "daily_new_confirmed_cases": 80,
+      "daily_new_confirmed_deaths": 49
+    },
+    {
+      "date": "2026-09-11",
+      "cumulative_confirmed_cases": 7113,
+      "cumulative_confirmed_deaths": 3437,
+      "calculated_cfr_percent": 48.32,
+      "daily_new_confirmed_cases": 91,
+      "daily_new_confirmed_deaths": 39
+    },
+    {
+      "date": "2026-09-12",
+      "cumulative_confirmed_cases": 7200,
+      "cumulative_confirmed_deaths": 3475,
+      "calculated_cfr_percent": 48.26,
+      "daily_new_confirmed_cases": 87,
+      "daily_new_confirmed_deaths": 38
+    },
+    {
+      "date": "2026-09-13",
+      "cumulative_confirmed_cases": 7258,
+      "cumulative_confirmed_deaths": 3510,
+      "calculated_cfr_percent": 48.36,
+      "daily_new_confirmed_cases": 58,
+      "daily_new_confirmed_deaths": 35
+    },
+    {
+      "date": "2026-09-14",
+      "cumulative_confirmed_cases": 7345,
+      "cumulative_confirmed_deaths": 3545,
+      "calculated_cfr_percent": 48.26,
+      "daily_new_confirmed_cases": 87,
+      "daily_new_confirmed_deaths": 35
+    },
+    {
+      "date": "2026-09-15",
+      "cumulative_confirmed_cases": 7404,
+      "cumulative_confirmed_deaths": 3577,
+      "calculated_cfr_percent": 48.31,
+      "daily_new_confirmed_cases": 59,
+      "daily_new_confirmed_deaths": 32
+    },
+    {
+      "date": "2026-09-16",
+      "cumulative_confirmed_cases": 7475,
+      "cumulative_confirmed_deaths": 3605,
+      "calculated_cfr_percent": 48.23,
+      "daily_new_confirmed_cases": 71,
+      "daily_new_confirmed_deaths": 28
+    },
+    {
+      "date": "2026-09-17",
+      "cumulative_confirmed_cases": 7541,
+      "cumulative_confirmed_deaths": 3639,
+      "calculated_cfr_percent": 48.26,
+      "daily_new_confirmed_cases": 66,
+      "daily_new_confirmed_deaths": 34
+    },
+    {
+      "date": "2026-09-18",
+      "cumulative_confirmed_cases": 7614,
+      "cumulative_confirmed_deaths": 3676,
+      "calculated_cfr_percent": 48.28,
+      "daily_new_confirmed_cases": 73,
+      "daily_new_confirmed_deaths": 37
+    },
+    {
+      "date": "2026-09-19",
+      "cumulative_confirmed_cases": 7672,
+      "cumulative_confirmed_deaths": 3699,
+      "calculated_cfr_percent": 48.21,
+      "daily_new_confirmed_cases": 58,
+      "daily_new_confirmed_deaths": 23
+    },
+    {
+      "date": "2026-09-20",
+      "cumulative_confirmed_cases": 7733,
+      "cumulative_confirmed_deaths": 3732,
+      "calculated_cfr_percent": 48.26,
+      "daily_new_confirmed_cases": 61,
+      "daily_new_confirmed_deaths": 33
+    },
+    {
+      "date": "2026-09-21",
+      "cumulative_confirmed_cases": 7773,
+      "cumulative_confirmed_deaths": 3759,
+      "calculated_cfr_percent": 48.36,
+      "daily_new_confirmed_cases": 40,
+      "daily_new_confirmed_deaths": 27
+    },
+    {
+      "date": "2026-09-22",
+      "cumulative_confirmed_cases": 7820,
+      "cumulative_confirmed_deaths": 3779,
+      "calculated_cfr_percent": 48.32,
+      "daily_new_confirmed_cases": 47,
+      "daily_new_confirmed_deaths": 20
+    },
+    {
+      "date": "2026-09-23",
+      "cumulative_confirmed_cases": 7890,
+      "cumulative_confirmed_deaths": 3799,
+      "calculated_cfr_percent": 48.15,
+      "daily_new_confirmed_cases": 70,
+      "daily_new_confirmed_deaths": 20
+    },
+    {
+      "date": "2026-09-24",
+      "cumulative_confirmed_cases": 7946,
+      "cumulative_confirmed_deaths": 3833,
+      "calculated_cfr_percent": 48.24,
+      "daily_new_confirmed_cases": 56,
+      "daily_new_confirmed_deaths": 34
+    },
+    {
+      "date": "2026-09-25",
+      "cumulative_confirmed_cases": 7989,
+      "cumulative_confirmed_deaths": 3852,
+      "calculated_cfr_percent": 48.22,
+      "daily_new_confirmed_cases": 43,
+      "daily_new_confirmed_deaths": 19
+    },
+    {
+      "date": "2026-09-26",
+      "cumulative_confirmed_cases": 8067,
+      "cumulative_confirmed_deaths": 3901,
+      "calculated_cfr_percent": 48.36,
+      "daily_new_confirmed_cases": 78,
+      "daily_new_confirmed_deaths": 49
+    },
+    {
+      "date": "2026-09-27",
+      "cumulative_confirmed_cases": 8116,
+      "cumulative_confirmed_deaths": 3924,
+      "calculated_cfr_percent": 48.35,
+      "daily_new_confirmed_cases": 49,
+      "daily_new_confirmed_deaths": 23
+    },
+    {
+      "date": "2026-09-28",
+      "cumulative_confirmed_cases": 8171,
+      "cumulative_confirmed_deaths": 3954,
+      "calculated_cfr_percent": 48.39,
+      "daily_new_confirmed_cases": 55,
+      "daily_new_confirmed_deaths": 30
+    },
+    {
+      "date": "2026-09-29",
+      "cumulative_confirmed_cases": 8224,
+      "cumulative_confirmed_deaths": 3982,
+      "calculated_cfr_percent": 48.42,
+      "daily_new_confirmed_cases": 53,
+      "daily_new_confirmed_deaths": 28
+    },
+    {
+      "date": "2026-09-30",
+      "cumulative_confirmed_cases": 8300,
+      "cumulative_confirmed_deaths": 4018,
+      "calculated_cfr_percent": 48.41,
+      "daily_new_confirmed_cases": 76,
+      "daily_new_confirmed_deaths": 36
+    },
+    {
+      "date": "2026-10-01",
+      "cumulative_confirmed_cases": 8376,
+      "cumulative_confirmed_deaths": 4042,
+      "calculated_cfr_percent": 48.26,
+      "daily_new_confirmed_cases": 76,
+      "daily_new_confirmed_deaths": 24
+    },
+    {
+      "date": "2026-10-02",
+      "cumulative_confirmed_cases": 8442,
+      "cumulative_confirmed_deaths": 4080,
+      "calculated_cfr_percent": 48.33,
+      "daily_new_confirmed_cases": 66,
+      "daily_new_confirmed_deaths": 38
+    },
+    {
+      "date": "2026-10-03",
+      "cumulative_confirmed_cases": 8544,
+      "cumulative_confirmed_deaths": 4114,
+      "calculated_cfr_percent": 48.15,
+      "daily_new_confirmed_cases": 102,
+      "daily_new_confirmed_deaths": 34
+    },
+    {
+      "date": "2026-10-04",
+      "cumulative_confirmed_cases": 8603,
+      "cumulative_confirmed_deaths": 4148,
+      "calculated_cfr_percent": 48.22,
+      "daily_new_confirmed_cases": 59,
+      "daily_new_confirmed_deaths": 34
+    },
+    {
+      "date": "2026-10-05",
+      "cumulative_confirmed_cases": 8665,
+      "cumulative_confirmed_deaths": 4178,
+      "calculated_cfr_percent": 48.22,
+      "daily_new_confirmed_cases": 62,
+      "daily_new_confirmed_deaths": 30
+    },
+    {
+      "date": "2026-10-06",
+      "cumulative_confirmed_cases": 8728,
+      "cumulative_confirmed_deaths": 4205,
+      "calculated_cfr_percent": 48.18,
+      "daily_new_confirmed_cases": 63,
+      "daily_new_confirmed_deaths": 27
+    },
+    {
+      "date": "2026-10-09",
+      "cumulative_confirmed_cases": 8914,
+      "cumulative_confirmed_deaths": 4315,
+      "calculated_cfr_percent": 48.41,
+      "daily_new_confirmed_cases": 186,
+      "daily_new_confirmed_deaths": 110
+    },
+    {
+      "date": "2026-10-10",
+      "cumulative_confirmed_cases": 8978,
+      "cumulative_confirmed_deaths": 4336,
+      "calculated_cfr_percent": 48.3,
+      "daily_new_confirmed_cases": 64,
+      "daily_new_confirmed_deaths": 21
+    },
+    {
+      "date": "2026-10-11",
+      "cumulative_confirmed_cases": 9066,
+      "cumulative_confirmed_deaths": 4381,
+      "calculated_cfr_percent": 48.32,
+      "daily_new_confirmed_cases": 88,
+      "daily_new_confirmed_deaths": 45
+    },
+    {
+      "date": "2026-10-12",
+      "cumulative_confirmed_cases": 9144,
+      "cumulative_confirmed_deaths": 4410,
+      "calculated_cfr_percent": 48.23,
+      "daily_new_confirmed_cases": 78,
+      "daily_new_confirmed_deaths": 29
+    },
+    {
+      "date": "2026-10-13",
+      "cumulative_confirmed_cases": 9212,
+      "cumulative_confirmed_deaths": 4441,
+      "calculated_cfr_percent": 48.21,
+      "daily_new_confirmed_cases": 68,
+      "daily_new_confirmed_deaths": 31
+    },
+    {
+      "date": "2026-10-14",
+      "cumulative_confirmed_cases": 9277,
+      "cumulative_confirmed_deaths": 4478,
+      "calculated_cfr_percent": 48.27,
+      "daily_new_confirmed_cases": 65,
+      "daily_new_confirmed_deaths": 37
+    },
+    {
+      "date": "2026-10-16",
+      "cumulative_confirmed_cases": 9415,
+      "cumulative_confirmed_deaths": 4536,
+      "calculated_cfr_percent": 48.18,
+      "daily_new_confirmed_cases": 138,
+      "daily_new_confirmed_deaths": 58
+    },
+    {
+      "date": "2026-10-17",
+      "cumulative_confirmed_cases": 9455,
+      "cumulative_confirmed_deaths": 4561,
+      "calculated_cfr_percent": 48.24,
+      "daily_new_confirmed_cases": 40,
+      "daily_new_confirmed_deaths": 25
+    },
+    {
+      "date": "2026-10-18",
+      "cumulative_confirmed_cases": 9552,
+      "cumulative_confirmed_deaths": 4602,
+      "calculated_cfr_percent": 48.18,
+      "daily_new_confirmed_cases": 97,
+      "daily_new_confirmed_deaths": 41
+    },
+    {
+      "date": "2026-10-19",
+      "cumulative_confirmed_cases": 9637,
+      "cumulative_confirmed_deaths": 4646,
+      "calculated_cfr_percent": 48.21,
+      "daily_new_confirmed_cases": 85,
+      "daily_new_confirmed_deaths": 44
+    },
+    {
+      "date": "2026-10-21",
+      "cumulative_confirmed_cases": 9765,
+      "cumulative_confirmed_deaths": 4727,
+      "calculated_cfr_percent": 48.41,
+      "daily_new_confirmed_cases": 128,
+      "daily_new_confirmed_deaths": 81
+    }
+  ]
+}

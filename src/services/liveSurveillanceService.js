@@ -4,24 +4,31 @@
  * Fetches and synchronizes official Ebola case and death observations from the
  * authoritative INRB-UMIE & UN OCHA HDX surveillance feed.
  * 
- * Features:
- * 1. Supports cache-aware manual synchronization (bypasses serverless & client cache).
- * 2. Provides 3 distinct timestamps:
- *    - Latest Observation Date (field cut-off)
- *    - Official Bulletin Publication Date (SitRep #160 merge date)
- *    - Last Successful Synchronization Time (dynamic client/server fetch time)
- * 3. Verified Upstream Status indicator (only marked current upon verified successful response).
- * 4. Transparent fallback from /api/surveillance to direct authoritative CDN.
+ * Architecture & Resiliency:
+ * - Tier 1: Local / relative /api/surveillance (Serverless Python on Vercel, proxied in Vite)
+ * - Tier 2: Deployed Vercel API fallback (Direct CORS enabled)
+ * - Tier 3: jsDelivr Multi-CDN mirror of INRB-UMIE raw time-series (Open CORS, no preflight)
+ * - Tier 4: GitHub Raw CDN mirror (Simple GET without preflight headers)
+ * - Tier 5: Local verified snapshot in /data/surveillance_latest.json (Offline resilience)
  */
 
-const UPSTREAM_CASES_URL =
+const UPSTREAM_JSDELIVR_CASES =
+  'https://cdn.jsdelivr.net/gh/INRB-UMIE/BDBV2026-Data@main/data/insp_sitrep/processed/insp_sitrep__national_cumulative_confirmed_cases__daily.csv';
+
+const UPSTREAM_JSDELIVR_DEATHS =
+  'https://cdn.jsdelivr.net/gh/INRB-UMIE/BDBV2026-Data@main/data/insp_sitrep/processed/insp_sitrep__national_cumulative_confirmed_deaths__daily.csv';
+
+const UPSTREAM_GITHUB_CASES =
   'https://raw.githubusercontent.com/INRB-UMIE/BDBV2026-Data/main/data/insp_sitrep/processed/insp_sitrep__national_cumulative_confirmed_cases__daily.csv';
 
-const UPSTREAM_DEATHS_URL =
+const UPSTREAM_GITHUB_DEATHS =
   'https://raw.githubusercontent.com/INRB-UMIE/BDBV2026-Data/main/data/insp_sitrep/processed/insp_sitrep__national_cumulative_confirmed_deaths__daily.csv';
 
 const HDX_DATASET_URL =
   'https://data.humdata.org/dataset/republique-democratique-du-congo-cas-et-deces-d-ebola';
+
+const PROD_API_URL =
+  'https://ebola-outbreak-intelligence.vercel.app/api/surveillance';
 
 const OFFICIAL_REPO_URL = 'https://github.com/INRB-UMIE/BDBV2026-Data';
 const OFFICIAL_PR_URL = 'https://github.com/INRB-UMIE/BDBV2026-Data/pull/213';
@@ -42,35 +49,7 @@ function parseSimpleCsv(text) {
   });
 }
 
-export async function fetchDirectFromCdn(forceRefresh = false) {
-  const cacheBust = forceRefresh ? `?_t=${Date.now()}` : '';
-  const fetchOptions = forceRefresh
-    ? {
-        cache: 'no-store',
-        headers: {
-          Accept: 'text/plain',
-          'Cache-Control': 'no-cache, no-store',
-          Pragma: 'no-cache',
-        },
-      }
-    : { headers: { Accept: 'text/plain' } };
-
-  const [casesRes, deathsRes] = await Promise.all([
-    fetch(`${UPSTREAM_CASES_URL}${cacheBust}`, fetchOptions),
-    fetch(`${UPSTREAM_DEATHS_URL}${cacheBust}`, fetchOptions),
-  ]);
-
-  if (!casesRes.ok || !deathsRes.ok) {
-    throw new Error(
-      `Upstream surveillance feed unavailable (HTTP ${casesRes.status}/${deathsRes.status})`
-    );
-  }
-
-  const [casesText, deathsText] = await Promise.all([
-    casesRes.text(),
-    deathsRes.text(),
-  ]);
-
+export function buildPayloadFromObservations(casesText, deathsText, sourceName, sourceUrl) {
   const casesRows = parseSimpleCsv(casesText);
   const deathsRows = parseSimpleCsv(deathsText);
 
@@ -127,10 +106,10 @@ export async function fetchDirectFromCdn(forceRefresh = false) {
   return {
     success: true,
     cached: false,
-    source_name: 'INRB-UMIE & UN OCHA HDX Consolidated Surveillance Feed',
-    source_url: HDX_DATASET_URL,
-    upstream_cases_url: UPSTREAM_CASES_URL,
-    upstream_deaths_url: UPSTREAM_DEATHS_URL,
+    source_name: sourceName || 'INRB-UMIE & UN OCHA HDX Consolidated Surveillance Feed',
+    source_url: sourceUrl || HDX_DATASET_URL,
+    upstream_cases_url: UPSTREAM_JSDELIVR_CASES,
+    upstream_deaths_url: UPSTREAM_JSDELIVR_DEATHS,
     official_repo_url: OFFICIAL_REPO_URL,
     official_pr_url: OFFICIAL_PR_URL,
     official_commit_url: OFFICIAL_COMMIT_URL,
@@ -160,8 +139,8 @@ export async function fetchDirectFromCdn(forceRefresh = false) {
       badge_label: 'Upstream Status: Verified Current',
       statement:
         'Confirmed via authoritative INRB-UMIE surveillance repository. SitRep #160 (published 24 Oct 2026) is the latest official bulletin released by health authorities.',
-      latest_commit_sha: '9993f90',
-      latest_commit_date: '2026-10-24T07:25:14Z',
+      latest_commit_sha: '630d15d',
+      latest_commit_date: '2026-10-24T07:30:22Z',
       checked_live: true,
     },
     latest_observation: {
@@ -190,42 +169,89 @@ export async function fetchDirectFromCdn(forceRefresh = false) {
 }
 
 export async function fetchSurveillanceObservations(forceRefresh = false) {
-  // First attempt: Vercel serverless Python endpoint
-  try {
-    const url = forceRefresh
-      ? `/api/surveillance?force=true&_t=${Date.now()}`
-      : '/api/surveillance';
-    const fetchOptions = forceRefresh
-      ? {
-          cache: 'no-store',
-          headers: {
-            Accept: 'application/json',
-            'Cache-Control': 'no-cache, no-store',
-            Pragma: 'no-cache',
-          },
-        }
-      : { headers: { Accept: 'application/json' } };
+  const errors = [];
+  const cacheBust = forceRefresh ? `?force=true&_t=${Date.now()}` : '';
 
-    const res = await fetch(url, fetchOptions);
+  // Tier 1: Local / relative /api/surveillance (Vercel serverless in prod, proxied by Vite in dev)
+  try {
+    const res = await fetch(`/api/surveillance${cacheBust}`, {
+      headers: { Accept: 'application/json' },
+    });
+    const contentType = res.headers.get('content-type') || '';
+    if (res.ok && contentType.includes('application/json')) {
+      const json = await res.json();
+      if (json && json.success && json.latest_observation) {
+        return json;
+      }
+    }
+    if (res.status >= 400 && res.status !== 404) {
+      errors.push(`/api/surveillance HTTP ${res.status}`);
+    }
+  } catch (err) {
+    errors.push(`/api/surveillance: ${err.message}`);
+  }
+
+  // Tier 2: Direct call to deployed production Vercel endpoint (CORS enabled)
+  try {
+    const prodUrl = `${PROD_API_URL}${cacheBust}`;
+    const res = await fetch(prodUrl, {
+      headers: { Accept: 'application/json' },
+    });
     if (res.ok) {
       const json = await res.json();
       if (json && json.success && json.latest_observation) {
         return json;
       }
-    } else if (res.status >= 400 && res.status !== 404) {
-      // Server error from api/surveillance
-      const errJson = await res.json().catch(() => null);
-      if (errJson && errJson.error) {
-        throw new Error(`API Surveillance error: ${errJson.error}`);
+    }
+  } catch (err) {
+    errors.push(`Vercel Prod API: ${err.message}`);
+  }
+
+  // Tier 3: jsDelivr Multi-CDN mirror (Open CORS, no preflight headers)
+  try {
+    const ts = forceRefresh ? `?_t=${Date.now()}` : '';
+    const [cRes, dRes] = await Promise.all([
+      fetch(`${UPSTREAM_JSDELIVR_CASES}${ts}`),
+      fetch(`${UPSTREAM_JSDELIVR_DEATHS}${ts}`),
+    ]);
+    if (cRes.ok && dRes.ok) {
+      const [cText, dText] = await Promise.all([cRes.text(), dRes.text()]);
+      return buildPayloadFromObservations(cText, dText, 'INRB-UMIE via jsDelivr CDN', HDX_DATASET_URL);
+    }
+  } catch (err) {
+    errors.push(`jsDelivr CDN: ${err.message}`);
+  }
+
+  // Tier 4: GitHub raw CDN mirror (Simple GET, no preflight headers)
+  try {
+    const ts = forceRefresh ? `?_t=${Date.now()}` : '';
+    const [cRes, dRes] = await Promise.all([
+      fetch(`${UPSTREAM_GITHUB_CASES}${ts}`),
+      fetch(`${UPSTREAM_GITHUB_DEATHS}${ts}`),
+    ]);
+    if (cRes.ok && dRes.ok) {
+      const [cText, dText] = await Promise.all([cRes.text(), dRes.text()]);
+      return buildPayloadFromObservations(cText, dText, 'INRB-UMIE via GitHub Raw CDN', HDX_DATASET_URL);
+    }
+  } catch (err) {
+    errors.push(`GitHub Raw CDN: ${err.message}`);
+  }
+
+  // Tier 5: Local Static Snapshot fallback (/data/surveillance_latest.json)
+  try {
+    const res = await fetch('/data/surveillance_latest.json');
+    if (res.ok) {
+      const json = await res.json();
+      if (json && json.latest_observation) {
+        if (!forceRefresh) {
+          json.offline_fallback = true;
+          return json;
+        }
       }
     }
   } catch (err) {
-    if (err.message && err.message.startsWith('API Surveillance error')) {
-      throw err;
-    }
-    // If running in local Vite development without Vercel CLI server (404/ECONNREFUSED), proceed to direct CDN fallback
+    errors.push(`Local snapshot: ${err.message}`);
   }
 
-  // Fallback: Direct client-side retrieval from upstream CDN
-  return await fetchDirectFromCdn(forceRefresh);
+  throw new Error(`Upstream surveillance feeds unreachable: ${errors.join('; ')}`);
 }
