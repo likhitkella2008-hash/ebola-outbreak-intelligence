@@ -1108,3 +1108,292 @@
   margin-top: 6px;
   line-height: 1.6;
 }
+
+
+/* ================================================================
+   FRESHNESS, UPSTREAM STATUS & PROVENANCE PANEL
+   ================================================================ */
+
+.freshness-panel {
+  background: #131c25;
+  border: 1px solid #243545;
+  border-radius: 14px;
+  padding: 22px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-bottom: 20px;
+}
+
+.freshness-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.freshness-title-wrap {
+  flex: 1;
+  min-width: 280px;
+}
+
+.freshness-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.panel-tag {
+  font: 600 10px 'DM Mono', monospace;
+  color: #72879a;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.upstream-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font: 600 11px 'DM Mono', monospace;
+  letter-spacing: 0.3px;
+}
+
+.upstream-badge.verified {
+  background: rgba(46, 213, 115, 0.12);
+  border: 1px solid rgba(46, 213, 115, 0.35);
+  color: #4ade80;
+}
+
+.upstream-badge.checking {
+  background: rgba(75, 210, 208, 0.12);
+  border: 1px solid rgba(75, 210, 208, 0.35);
+  color: #6edfe2;
+}
+
+.upstream-badge.error {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #f87171;
+}
+
+.freshness-header h3 {
+  font: 700 18px Manrope, sans-serif;
+  color: #f1f6fa;
+  margin: 0 0 6px;
+}
+
+.freshness-subtitle {
+  font-size: 12.5px;
+  color: #9cb0bf;
+  margin: 0;
+  line-height: 1.55;
+  max-width: 780px;
+}
+
+.manual-refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: 8px;
+  background: #1d333e;
+  border: 1px solid #336170;
+  color: #6ee7b7;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.manual-refresh-btn:hover:not(:disabled) {
+  background: #254250;
+  border-color: #4e8c9f;
+}
+
+.manual-refresh-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.sync-feedback-toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.sync-feedback-toast.success {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #a7f3d0;
+}
+
+.sync-feedback-toast.error {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+}
+
+.three-timestamps-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+@media (max-width: 900px) {
+  .three-timestamps-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.timestamp-card {
+  background: #17222c;
+  border: 1px solid #273747;
+  border-radius: 10px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+  transition: border-color 0.2s;
+}
+
+.timestamp-card:hover {
+  border-color: #3b5064;
+}
+
+.ts-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 2px;
+}
+
+.ts-icon-wrap {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ts-icon-wrap.blue {
+  background: rgba(72, 198, 207, 0.15);
+  color: #48c6cf;
+}
+
+.ts-icon-wrap.amber {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+}
+
+.ts-icon-wrap.green {
+  background: rgba(52, 211, 153, 0.15);
+  color: #34d399;
+}
+
+.ts-pill {
+  font: 600 9px 'DM Mono', monospace;
+  padding: 2px 7px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+}
+
+.ts-pill.blue {
+  background: #1b303d;
+  color: #6edfe2;
+  border: 1px solid #2c5267;
+}
+
+.ts-pill.amber {
+  background: #362817;
+  color: #fcd34d;
+  border: 1px solid #5a4220;
+}
+
+.ts-pill.green {
+  background: #143224;
+  color: #86efac;
+  border: 1px solid #225c3e;
+}
+
+.ts-label {
+  font-size: 11px;
+  color: #8b9ea7;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ts-value {
+  font: 700 17px Manrope, sans-serif;
+  color: #f3f7fa;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ts-subvalue {
+  font: 500 12px 'DM Mono', monospace;
+  color: #8fa0b0;
+}
+
+.ts-desc {
+  font-size: 11.5px;
+  color: #7d8f9f;
+  line-height: 1.45;
+  margin-top: 2px;
+}
+
+.provenance-footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  padding-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.prov-title {
+  font: 600 11px 'DM Mono', monospace;
+  color: #8397a8;
+  letter-spacing: 0.5px;
+}
+
+.prov-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.prov-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  background: #1b2632;
+  border: 1px solid #2a3c4f;
+  border-radius: 6px;
+  color: #88d4df;
+  font-size: 11px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.18s;
+}
+
+.prov-link:hover {
+  background: #233546;
+  border-color: #4b6b8b;
+  color: #bbf2f8;
+}

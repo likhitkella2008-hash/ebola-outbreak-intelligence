@@ -137,6 +137,7 @@ function EmptyState({ icon: Icon, title, text }) {
 }
 
 function StreamSelectorBar({ streamMode, setStreamMode, lastSync, surveillanceData }) {
+  const verified = surveillanceData?.upstream_verification?.verified;
   return (
     <div className="stream-selector-bar">
       <div className="stream-pills">
@@ -170,7 +171,7 @@ function StreamSelectorBar({ streamMode, setStreamMode, lastSync, surveillanceDa
           </span>
         ) : (
           <span className="stream-mode-badge surveillance">
-            LIVE OFFICIAL FEED · AUTO-SYNC: 60M · {lastSync ? `SYNCED ${lastSync.toLocaleTimeString()}` : 'CONNECTING...'}
+            LIVE OFFICIAL FEED · SITREP #160 (OBS: OCT 21 · PUB: OCT 24) · {verified ? 'UPSTREAM: VERIFIED CURRENT' : 'CHECKING UPSTREAM...'} · {lastSync ? `SYNCED ${lastSync.toLocaleTimeString()}` : 'CONNECTING...'}
           </span>
         )}
       </div>
